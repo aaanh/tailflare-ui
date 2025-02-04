@@ -7,19 +7,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getCloudflareZones } from "@/app/actions";
+import { getCloudflareRecordsInZone, getCloudflareZones } from "@/app/actions";
 import { debounce } from "lodash";
 import { Information } from "@/lib/schema-type";
 import { Spinner } from "../ui/spinner";
 import SideContainer from "./side-container";
+import { toast } from "@/hooks/use-toast";
+import HostItem from "./host-item";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 
 export default function CloudflareSide() {
-  const [selectedZone, setSelectedZone] = useState<string>();
   const { information, setInformation, tailflareState } = useTailflare();
   const [isLoading, setIsLoading] = useState(false);
 
-  function handleSelectZone(id: string) {
-    setSelectedZone(id);
+  async function handleSelectZone(id: string) {
+    const records = await getCloudflareRecordsInZone(tailflareState, id);
+    setInformation((prev: Information) => ({
+      ...prev,
+      cloudflare: {
+        ...prev.cloudflare,
+        selectedZone: id,
+        dnsRecords: records,
+      },
+    }));
+    toast({
+      title: "Fetched records from selected zone",
+    });
   }
 
   // Create a debounced version of the fetch function
@@ -32,6 +51,7 @@ export default function CloudflareSide() {
           id: zone.id,
           name: zone.name,
         }));
+
         setInformation((prev: Information) => ({
           ...prev,
           cloudflare: {
@@ -48,7 +68,7 @@ export default function CloudflareSide() {
 
   // Set up effect to fetch data when cloudflare state changes
   useEffect(() => {
-    if (tailflareState.cloudflareApiKey) {
+    if (tailflareState.cloudflareApiKey && tailflareState.cloudflareApiEmail) {
       debouncedFetch();
     }
 
@@ -59,38 +79,57 @@ export default function CloudflareSide() {
   }, [tailflareState, debouncedFetch]);
 
   return (
-
     <SideContainer>
       <div className="relative mx-auto w-fit">
         <h2 className="font-bold text-2xl">Cloudflare</h2>
-        <div className="top-2.5 -left-1 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2"></div>
+        <div className="top-2.5 -left-1 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2" />
       </div>
 
       <div className="items-center gap-2">
-        <div className="flex items-center overflow-hidden text-ellipsis">
-          <Select onValueChange={handleSelectZone} disabled={information.cloudflare.zones.length === 0}>
+        <div className="flex items-center text-ellipsis overflow-hidden">
+          <Select
+            onValueChange={handleSelectZone}
+            disabled={information.cloudflare.zones.length === 0}
+          >
             <SelectTrigger className="bg-background">
-              <SelectValue className="" placeholder={
-                information.cloudflare.zones.length === 0
-                  ? "No zones available"
-                  : "Select zone"
-              } />
+              <SelectValue
+                className=""
+                placeholder={
+                  information.cloudflare.zones.length === 0
+                    ? "No zones available"
+                    : "Select zone"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              {information.cloudflare.zones.map((zone) => (
+              {information.cloudflare.zones.map((zone, idx) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  <span className="break-all">{zone.name}</span>
-                  {" - "}
-                  <span className="break-all">{zone.id}</span>
+                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${
+                    zone.id
+                  }`}</span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {isLoading && <Spinner />}
         </div>
+      </div>
 
+      <div>
+        <Table className="gap-2 grid">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">CNAME</TableHead>
+              <TableHead className="w-[300px]">Content</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {information.cloudflare.dnsRecords.map((record) => (
+              <HostItem key={record.id} record={record} />
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </SideContainer>
-
   );
 }

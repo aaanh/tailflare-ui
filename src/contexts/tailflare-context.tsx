@@ -10,7 +10,9 @@ interface TailflareContextType {
   setTailflareState: (state: TailflareState) => void;
 }
 
-const TailflareContext = createContext<TailflareContextType | undefined>(undefined);
+const TailflareContext = createContext<TailflareContextType | undefined>(
+  undefined
+);
 
 export function TailflareProvider({ children }: { children: ReactNode }) {
   const [tailflareState, setTailflareState] = useState<TailflareState>({
@@ -26,6 +28,7 @@ export function TailflareProvider({ children }: { children: ReactNode }) {
     },
     cloudflare: {
       zones: [],
+      dnsRecords: [],
     },
   });
 
@@ -49,4 +52,4 @@ export function useTailflare() {
     throw new Error("useTailflare must be used within a TailflareProvider");
   }
   return context;
-} 
+}

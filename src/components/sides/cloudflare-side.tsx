@@ -81,7 +81,7 @@ export default function CloudflareSide() {
                 <SelectItem value={zone.id} key={zone.id}>
                   <span className="break-all">{zone.name}</span>
                   {" - "}
-                  <span className="break-all">{selectedZone}</span>
+                  <span className="break-all">{zone.id}</span>
                 </SelectItem>
               ))}
             </SelectContent>

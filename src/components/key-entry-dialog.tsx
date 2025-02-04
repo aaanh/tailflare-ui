@@ -2,7 +2,7 @@
 
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { Information, TailflareState } from "@/lib/schema-type";
+import { fieldMap, TailflareState } from "@/lib/schema-type";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -13,10 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { EyeClosed, Eye, CheckCircle2, XCircle, LockKeyholeIcon } from "lucide-react";
+import { EyeClosed, Eye, LockKeyholeIcon } from "lucide-react";
 import { Button } from "./ui/button";
-import { getCloudflareZones } from "@/app/actions";
-import { decryptData, encryptData } from "@/lib/utils";
+
+import { encryptData } from "@/lib/utils";
 import { useTailflare } from "@/contexts/tailflare-context";
 import { initializeStoredState } from "@/hooks/initialize-stored-state";
 import { useToast } from "@/hooks/use-toast";
@@ -27,12 +27,7 @@ interface KeyEntryFormProps {
   showSecrets: boolean;
 }
 
-const fieldMap: Record<string, keyof TailflareState> = {
-  "tailscale-api-key": "tailscaleApiKey",
-  "cloudflare-api-key": "cloudflareApiKey",
-  "tailnet-organization": "tailnetOrganization",
-  "cloudflare-api-email": "cloudflareApiEmail",
-};
+
 
 function KeyEntryForm({
   tailflareState,
@@ -158,7 +153,7 @@ export default function KeyEntryDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button><LockKeyholeIcon />Add API Secrets</Button>
+        <Button size={"sm"}><LockKeyholeIcon />Add API Secrets</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
@@ -208,24 +203,7 @@ export default function KeyEntryDialog() {
   );
 }
 
-export function ApiKeyStatus() {
-  const { tailflareState } = useTailflare();
 
-  return <div className="grid grid-cols-4 border p-2 rounded-md border-neutral-500">
-    {Object.entries(fieldMap).map(([label, key]) => (
-      <div key={label} className="flex items-center gap-2">
-        {tailflareState[key] ? (
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-        ) : (
-          <XCircle className="h-5 w-5 text-red-500" />
-        )}
-        <span className="capitalize">
-          {label.replace(/-/g, ' ')}
-        </span>
-      </div>
-    ))}
-  </div>
-}
 
 function useInitializeHashKey() {
   const [hashKey, setHashKey] = useState<string | null>(null);

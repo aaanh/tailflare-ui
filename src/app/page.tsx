@@ -1,8 +1,8 @@
-import ClientWrapper from "@/components/client-wrapper";
+import ClientWrapper from "@/components/layout/client-wrapper";
 
 export default function Home() {
   return (
-    <div className="gap-4 flex flex-col mx-auto p-4 container min-h-screen">
+    <div className="lg:gap-4 gap-2 flex flex-col mx-auto lg:p-4 p-2 container min-h-screen">
       <ClientWrapper />
     </div>
   );

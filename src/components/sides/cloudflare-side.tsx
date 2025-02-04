@@ -6,11 +6,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from "../ui/select";
 import { getCloudflareZones } from "@/app/actions";
 import { debounce } from "lodash";
 import { Information } from "@/lib/schema-type";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 import SideContainer from "./side-container";
 
 export default function CloudflareSide() {
@@ -66,32 +66,29 @@ export default function CloudflareSide() {
         <div className="top-2.5 -left-1 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2"></div>
       </div>
 
-      <div className="items-center grid grid-cols-[1.5fr_1fr]">
-        <div className="flex items-center gap-2">
-          <span>Zone</span>
+      <div className="items-center gap-2">
+        <div className="flex items-center overflow-hidden text-ellipsis">
           <Select onValueChange={handleSelectZone} disabled={information.cloudflare.zones.length === 0}>
-            <SelectTrigger className="max-w-[300px] bg-background">
-              <SelectValue placeholder={
+            <SelectTrigger className="bg-background">
+              <SelectValue className="" placeholder={
                 information.cloudflare.zones.length === 0
                   ? "No zones available"
-                  : "Select Cloudflare zone/domain"
+                  : "Select zone"
               } />
             </SelectTrigger>
             <SelectContent>
               {information.cloudflare.zones.map((zone) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  {zone.name}
+                  <span className="break-all">{zone.name}</span>
+                  {" - "}
+                  <span className="break-all">{selectedZone}</span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {isLoading && <Spinner />}
         </div>
-        <div className="grid grid-cols-[1fr_4fr] items-center gap-2 text-sm">
 
-          <span>ID</span>
-          <span className="p-2 border bg-background rounded-md">{selectedZone}</span>
-        </div>
       </div>
     </SideContainer>
 

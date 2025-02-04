@@ -24,3 +24,10 @@ export const InformationSchema = z.object({
 });
 
 export type Information = z.infer<typeof InformationSchema>;
+
+export const fieldMap: Record<string, keyof TailflareState> = {
+  "tailscale-api-key": "tailscaleApiKey",
+  "tailnet-organization": "tailnetOrganization",
+  "cloudflare-api-key": "cloudflareApiKey",
+  "cloudflare-api-email": "cloudflareApiEmail",
+};

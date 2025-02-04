@@ -66,10 +66,11 @@ export default function CloudflareSide() {
         <div className="top-2.5 -left-1 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2"></div>
       </div>
 
-      <div className="items-center grid grid-cols-2">
+      <div className="items-center grid grid-cols-[1.5fr_1fr]">
         <div className="flex items-center gap-2">
+          <span>Zone</span>
           <Select onValueChange={handleSelectZone} disabled={information.cloudflare.zones.length === 0}>
-            <SelectTrigger className="max-w-[300px]">
+            <SelectTrigger className="max-w-[300px] bg-background">
               <SelectValue placeholder={
                 information.cloudflare.zones.length === 0
                   ? "No zones available"
@@ -86,7 +87,11 @@ export default function CloudflareSide() {
           </Select>
           {isLoading && <Spinner />}
         </div>
-        <span>Zone ID: {selectedZone}</span>
+        <div className="grid grid-cols-[1fr_4fr] items-center gap-2 text-sm">
+
+          <span>ID</span>
+          <span className="p-2 border bg-background rounded-md">{selectedZone}</span>
+        </div>
       </div>
     </SideContainer>
 

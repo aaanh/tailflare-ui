@@ -8,7 +8,7 @@ interface HostItemProps {
 export default function HostItem({ record }: HostItemProps) {
   return (
     <TableRow>
-      <TableCell className="w-[300px] overflow-scroll">{record.name}</TableCell>
+      <TableCell className="w-[300px]">{record.name}</TableCell>
       <TableCell className="break-all">{record.content}</TableCell>
     </TableRow>
   );

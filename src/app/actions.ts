@@ -6,6 +6,7 @@ import {
   RecordCreateParams,
   RecordResponse,
 } from "cloudflare/resources/dns/records.mjs";
+import { getTailscaleClient } from "@/lib/tailscale-client";
 
 export async function getCloudflareZones(tailflareState: TailflareState) {
   const cloudflareClient = getCloudflareClient(tailflareState);
@@ -45,6 +46,14 @@ export async function createCloudflareRecordInZone(
   const response = await cloudflareClient.dns.records.create(
     recordCreateParams
   );
+
+  return response;
+}
+
+export async function getTailscaleHosts(tailflareState: TailflareState) {
+  const client = getTailscaleClient(tailflareState);
+
+  const response = await client.devices.list();
 
   return response;
 }

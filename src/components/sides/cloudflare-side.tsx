@@ -21,27 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import { loadFromCache, saveToCache } from "@/lib/local-storage";
+import { RefreshCw } from "lucide-react";
+import { Button } from "../ui/button";
 
 export default function CloudflareSide() {
   const { information, setInformation, tailflareState } = useTailflare();
   const [isLoading, setIsLoading] = useState(false);
 
-  async function handleSelectZone(id: string) {
-    const records = await getCloudflareRecordsInZone(tailflareState, id);
-    setInformation((prev: Information) => ({
-      ...prev,
-      cloudflare: {
-        ...prev.cloudflare,
-        selectedZone: id,
-        dnsRecords: records,
-      },
-    }));
-    toast({
-      title: "Fetched records from selected zone",
-    });
-  }
-
-  // Create a debounced version of the fetch function
   const debouncedFetch = useCallback(
     debounce(async () => {
       setIsLoading(true);
@@ -52,19 +39,95 @@ export default function CloudflareSide() {
           name: zone.name,
         }));
 
-        setInformation((prev: Information) => ({
-          ...prev,
-          cloudflare: {
-            ...prev.cloudflare,
-            zones,
-          },
-        }));
+        setInformation((prev: Information) => {
+          const newInfo = {
+            ...prev,
+            cloudflare: {
+              ...prev.cloudflare,
+              zones,
+            },
+          };
+          saveToCache(newInfo);
+          return newInfo;
+        });
       } finally {
         setIsLoading(false);
       }
     }, 500),
     [tailflareState]
   );
+
+  async function handleSelectZone(id: string) {
+    const records = await getCloudflareRecordsInZone(tailflareState, id);
+    setInformation((prev: Information) => {
+      const newInfo = {
+        ...prev,
+        cloudflare: {
+          ...prev.cloudflare,
+          selectedZone: id,
+          dnsRecords: records,
+        },
+      };
+      saveToCache(newInfo);
+      return newInfo;
+    });
+    toast({
+      title: "Fetched records from selected zone",
+    });
+  }
+
+  async function handleForceRefresh() {
+    setIsLoading(true);
+    try {
+      // Fetch zones
+      const response = await getCloudflareZones(tailflareState);
+      const zones = response.map((zone) => ({
+        id: zone.id,
+        name: zone.name,
+      }));
+
+      // If there's a selected zone, fetch its records
+      let records = information.cloudflare.dnsRecords;
+      if (information.cloudflare.selectedZone) {
+        records = await getCloudflareRecordsInZone(
+          tailflareState,
+          information.cloudflare.selectedZone
+        );
+      }
+
+      setInformation((prev) => {
+        const newInfo = {
+          ...prev,
+          cloudflare: {
+            ...prev.cloudflare,
+            zones,
+            dnsRecords: records,
+          },
+        };
+        saveToCache(newInfo);
+        return newInfo;
+      });
+
+      toast({
+        title: "Cache refreshed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to refresh cache",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Load cached data on mount
+  useEffect(() => {
+    const cached = loadFromCache();
+    if (cached) {
+      setInformation(cached);
+    }
+  }, []);
 
   // Set up effect to fetch data when cloudflare state changes
   useEffect(() => {
@@ -86,9 +149,10 @@ export default function CloudflareSide() {
       </div>
 
       <div className="items-center gap-2">
-        <div className="flex items-center text-ellipsis overflow-hidden">
+        <div className="flex items-center gap-2 text-ellipsis overflow-hidden">
           <Select
             onValueChange={handleSelectZone}
+            value={information.cloudflare.selectedZone}
             disabled={information.cloudflare.zones.length === 0}
           >
             <SelectTrigger className="bg-background">
@@ -111,6 +175,16 @@ export default function CloudflareSide() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleForceRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </Button>
           {isLoading && <Spinner />}
         </div>
       </div>
@@ -124,9 +198,9 @@ export default function CloudflareSide() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {information.cloudflare.dnsRecords.map((record) => (
-              <HostItem key={record.id} record={record} />
-            ))}
+            {information.cloudflare.dnsRecords.map((record) =>
+              record ? <HostItem key={record.id} record={record} /> : null
+            )}
           </TableBody>
         </Table>
       </div>

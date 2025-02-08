@@ -18,6 +18,11 @@ import { loadFromCache, saveToCache } from "@/lib/local-storage";
 import { RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 
+// Add this helper function at the top of the file, outside the component
+function getDeepestSubdomain(hostname: string): string {
+  return hostname.split('.')[0];
+}
+
 export default function TailscaleSide() {
   const { tailflareState, information, setInformation } = useTailflare();
   const [isLoading, setIsLoading] = useState(false);
@@ -134,31 +139,72 @@ export default function TailscaleSide() {
         </div>
       </div>
 
-      <div>
-        <Table className="gap-2 grid">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[400px]">FQDN</TableHead>
-              {/* <TableHead className="w-[400px]">Other info</TableHead> */}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {information.tailscale.hosts.map((host) => (
-              <HostItem
-                key={host}
-                record={{
-                  id: "placeholder-id",
-                  created_on: new Date().toISOString(),
-                  meta: {},
-                  modified_on: new Date().toISOString(),
-                  proxiable: false,
-                  name: host,
-                  content: "",
-                }}
-              />
-            ))}
-          </TableBody>
-        </Table>
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Matched Hosts</h3>
+          <Table className="gap-2 grid">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[600px]">FQDN</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {information.tailscale.hosts
+                .filter((host) =>
+                  information.cloudflare.dnsRecords.some(
+                    record => record && getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
+                  )
+                )
+                .map((host) => (
+                  <HostItem
+                    key={host}
+                    record={{
+                      id: "placeholder-id",
+                      created_on: new Date().toISOString(),
+                      meta: {},
+                      modified_on: new Date().toISOString(),
+                      proxiable: false,
+                      name: host,
+                      content: undefined,
+                    }}
+                  />
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Unmatched Hosts</h3>
+          <Table className="gap-2 grid">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[600px]">FQDN</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {information.tailscale.hosts
+                .filter((host) =>
+                  !information.cloudflare.dnsRecords.some(
+                    record => record && getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
+                  )
+                )
+                .map((host) => (
+                  <HostItem
+                    key={host}
+                    record={{
+                      id: "placeholder-id",
+                      created_on: new Date().toISOString(),
+                      meta: {},
+                      modified_on: new Date().toISOString(),
+                      proxiable: false,
+                      name: host,
+                      content: undefined,
+                    }}
+                  />
+                ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </SideContainer>
   );

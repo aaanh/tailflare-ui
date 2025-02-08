@@ -24,11 +24,7 @@ import {
 import { loadFromCache, saveToCache } from "@/lib/local-storage";
 import { RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
-
-// Add this helper function at the top of the file, outside the component
-function getDeepestSubdomain(hostname: string): string {
-  return hostname.split('.')[0];
-}
+import { getDeepestSubdomain } from "@/lib/utils";
 
 export default function CloudflareSide() {
   const { information, setInformation, tailflareState } = useTailflare();
@@ -173,8 +169,9 @@ export default function CloudflareSide() {
             <SelectContent>
               {information.cloudflare.zones.map((zone, idx) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${zone.id
-                    }`}</span>
+                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${
+                    zone.id
+                  }`}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -195,7 +192,7 @@ export default function CloudflareSide() {
 
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Matched Records</h3>
+          <h3 className="mb-2 font-semibold text-lg">Matched Records</h3>
           <Table className="gap-2 grid">
             <TableHeader>
               <TableRow>
@@ -205,19 +202,24 @@ export default function CloudflareSide() {
             </TableHeader>
             <TableBody>
               {information.cloudflare.dnsRecords
-                .filter((record) =>
-                  record && information.tailscale.hosts.some(
-                    host => getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
-                  )
+                .filter(
+                  (record) =>
+                    record &&
+                    information.tailscale.hosts.some(
+                      (host) =>
+                        getDeepestSubdomain(host) ===
+                        getDeepestSubdomain(record.name ?? "")
+                    )
                 )
-                .map((record) => record ? <HostItem key={record.id} record={record} /> : null)
-              }
+                .map((record) =>
+                  record ? <HostItem key={record.id} record={record} /> : null
+                )}
             </TableBody>
           </Table>
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-2">Unmatched Records</h3>
+          <h3 className="mb-2 font-semibold text-lg">Unmatched Records</h3>
           <Table className="gap-2 grid">
             <TableHeader>
               <TableRow>
@@ -227,13 +229,18 @@ export default function CloudflareSide() {
             </TableHeader>
             <TableBody>
               {information.cloudflare.dnsRecords
-                .filter((record) =>
-                  record && !information.tailscale.hosts.some(
-                    host => getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
-                  )
+                .filter(
+                  (record) =>
+                    record &&
+                    !information.tailscale.hosts.some(
+                      (host) =>
+                        getDeepestSubdomain(host) ===
+                        getDeepestSubdomain(record.name ?? "")
+                    )
                 )
-                .map((record) => record ? <HostItem key={record.id} record={record} /> : null)
-              }
+                .map((record) =>
+                  record ? <HostItem key={record.id} record={record} /> : null
+                )}
             </TableBody>
           </Table>
         </div>

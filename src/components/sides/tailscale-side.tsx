@@ -17,11 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import { loadFromCache, saveToCache } from "@/lib/local-storage";
 import { RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
-
-// Add this helper function at the top of the file, outside the component
-function getDeepestSubdomain(hostname: string): string {
-  return hostname.split('.')[0];
-}
+import { getDeepestSubdomain } from "@/lib/utils";
 
 export default function TailscaleSide() {
   const { tailflareState, information, setInformation } = useTailflare();
@@ -141,7 +137,7 @@ export default function TailscaleSide() {
 
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Matched Hosts</h3>
+          <h3 className="mb-2 font-semibold text-lg">Matched Hosts</h3>
           <Table className="gap-2 grid">
             <TableHeader>
               <TableRow>
@@ -152,7 +148,10 @@ export default function TailscaleSide() {
               {information.tailscale.hosts
                 .filter((host) =>
                   information.cloudflare.dnsRecords.some(
-                    record => record && getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
+                    (record) =>
+                      record &&
+                      getDeepestSubdomain(host) ===
+                        getDeepestSubdomain(record.name ?? "")
                   )
                 )
                 .map((host) => (
@@ -174,7 +173,7 @@ export default function TailscaleSide() {
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-2">Unmatched Hosts</h3>
+          <h3 className="mb-2 font-semibold text-lg">Unmatched Hosts</h3>
           <Table className="gap-2 grid">
             <TableHeader>
               <TableRow>
@@ -183,10 +182,14 @@ export default function TailscaleSide() {
             </TableHeader>
             <TableBody>
               {information.tailscale.hosts
-                .filter((host) =>
-                  !information.cloudflare.dnsRecords.some(
-                    record => record && getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
-                  )
+                .filter(
+                  (host) =>
+                    !information.cloudflare.dnsRecords.some(
+                      (record) =>
+                        record &&
+                        getDeepestSubdomain(host) ===
+                          getDeepestSubdomain(record.name ?? "")
+                    )
                 )
                 .map((host) => (
                   <HostItem

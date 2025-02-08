@@ -69,3 +69,7 @@ export async function decryptData(encryptedText: string, hashKey: string) {
     return null;
   }
 }
+
+export function getDeepestSubdomain(hostname: string): string {
+  return hostname.split(".")[0];
+}

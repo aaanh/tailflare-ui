@@ -109,10 +109,14 @@ export default function TailscaleSide() {
 
   return (
     <SideContainer>
-      <div className="relative flex flex-col gap-2 mx-auto w-fit">
-        <h2 className="font-bold text-2xl text-background">Tailscale</h2>
-        <div className="top-1.25 -left-1 -z-10 absolute bg-primary skew-x-6 w-36 h-7 -rotate-2"></div>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 mx-auto w-fit">
+        <div className="relative">
+          <h2 className="font-bold text-2xl text-background text-center">
+            Tailscale
+          </h2>
+          <div className="top-0 left-10 -z-10 absolute bg-primary skew-x-6 w-36 h-7 -rotate-2"></div>
+        </div>
+        <div className="flex justify-center items-center gap-2">
           <Input
             disabled
             value={
@@ -131,7 +135,6 @@ export default function TailscaleSide() {
               className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
             />
           </Button>
-          {isLoading && <Spinner />}
         </div>
       </div>
 

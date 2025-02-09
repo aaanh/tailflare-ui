@@ -8,6 +8,7 @@ import Header from "./header";
 import { ThemeProvider } from "../theme-provider";
 import Footer from "./footer";
 import { ApiKeyStatus } from "../api-key-status";
+import { SubdomainDialog } from "../subdomain-dialog";
 
 export default function ClientWrapper() {
   return (
@@ -19,6 +20,7 @@ export default function ClientWrapper() {
       <TailflareProvider>
         <Header />
         <ApiKeyStatus />
+        <SubdomainDialog />
         <div className="gap-2 grid lg:grid-cols-2">
           <TailscaleSide />
           <CloudflareSide />

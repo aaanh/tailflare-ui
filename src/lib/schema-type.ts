@@ -42,7 +42,7 @@ export const InformationSchema = z.object({
           val.split(".").length <= 1 && val[-1] !== "." && val[0] !== ".",
         {
           message:
-            "Enter a valid subdomain. Currently only support up to 4th level. E.g. subsub.sub.domain.tld",
+            "Enter a valid subdomain. Currently only support up to 4th level. E.g. anguyen-workstation.engineering.aaanh.com",
         }
       )
       .default(""),
@@ -56,7 +56,8 @@ export type Information = {
   cloudflare: {
     zones: { name: string; id: string }[];
     dnsRecords: RecordResponse[];
-    selectedZone?: string;
+    selectedZone?: { id: string; name: string };
+    subdomain: string;
   };
 };
 

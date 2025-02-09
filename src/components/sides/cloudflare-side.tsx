@@ -60,12 +60,26 @@ export default function CloudflareSide() {
 
   async function handleSelectZone(id: string) {
     const records = await getCloudflareRecordsInZone(tailflareState, id);
+    const selectedZone = information.cloudflare.zones.find(zone => zone.id === id);
+
+    if (!selectedZone) {
+      toast({
+        title: "Error",
+        description: "Selected zone not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setInformation((prev: Information) => {
       const newInfo = {
         ...prev,
         cloudflare: {
           ...prev.cloudflare,
-          selectedZone: id,
+          selectedZone: {
+            id: selectedZone.id,
+            name: selectedZone.name
+          },
           dnsRecords: records,
         },
       };
@@ -92,7 +106,7 @@ export default function CloudflareSide() {
       if (information.cloudflare.selectedZone) {
         records = await getCloudflareRecordsInZone(
           tailflareState,
-          information.cloudflare.selectedZone
+          information.cloudflare.selectedZone.id
         );
       }
 
@@ -146,14 +160,14 @@ export default function CloudflareSide() {
     <SideContainer>
       <div className="relative mx-auto w-fit">
         <h2 className="font-bold text-2xl">Cloudflare</h2>
-        <div className="top-2.5 -left-1 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2" />
+        <div className="top-2.5 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2" />
       </div>
 
       <div className="items-center gap-2">
         <div className="flex items-center gap-2 text-ellipsis overflow-hidden">
           <Select
             onValueChange={handleSelectZone}
-            value={information.cloudflare.selectedZone}
+            value={information.cloudflare.selectedZone?.id}
             disabled={information.cloudflare.zones.length === 0}
           >
             <SelectTrigger className="bg-background">
@@ -169,9 +183,8 @@ export default function CloudflareSide() {
             <SelectContent>
               {information.cloudflare.zones.map((zone, idx) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${
-                    zone.id
-                  }`}</span>
+                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${zone.id
+                    }`}</span>
                 </SelectItem>
               ))}
             </SelectContent>

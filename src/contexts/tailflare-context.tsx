@@ -29,6 +29,7 @@ export function TailflareProvider({ children }: { children: ReactNode }) {
     cloudflare: {
       zones: [],
       dnsRecords: [],
+      subdomain: ""
     },
   });
 

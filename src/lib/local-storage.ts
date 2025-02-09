@@ -7,7 +7,10 @@ type CacheData = {
   timestamp: number;
   information: Information;
   selectedZoneCache?: {
-    zoneId: string;
+    zone: {
+      id: string;
+      name: string;
+    };
     records: Information["cloudflare"]["dnsRecords"];
   };
 };
@@ -21,7 +24,10 @@ export function saveToCache(information: Information) {
   // If there's a selected zone, cache it with its records
   if (information.cloudflare.selectedZone) {
     currentCache.selectedZoneCache = {
-      zoneId: information.cloudflare.selectedZone,
+      zone: {
+        id: information.cloudflare.selectedZone.id,
+        name: information.cloudflare.selectedZone.name,
+      },
       records: information.cloudflare.dnsRecords,
     };
   }
@@ -44,10 +50,8 @@ export function loadFromCache(): Information | null {
 
   // Restore selected zone and its records if they exist
   if (cacheData.selectedZoneCache) {
-    cacheData.information.cloudflare.selectedZone =
-      cacheData.selectedZoneCache.zoneId;
-    cacheData.information.cloudflare.dnsRecords =
-      cacheData.selectedZoneCache.records;
+    cacheData.information.cloudflare.selectedZone = cacheData.selectedZoneCache.zone;
+    cacheData.information.cloudflare.dnsRecords = cacheData.selectedZoneCache.records;
   }
 
   return cacheData.information;

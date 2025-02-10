@@ -7,10 +7,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getCloudflareRecordsInZone, getCloudflareZones } from "@/app/actions";
+import {
+  deleteRecordByIdFromCloudflare,
+  getCloudflareRecordsInZone,
+  getCloudflareZones,
+} from "@/app/actions";
 import { debounce } from "lodash";
 import { Information } from "@/lib/schema-type";
-import { Spinner } from "../ui/spinner";
 import SideContainer from "./side-container";
 import { toast } from "@/hooks/use-toast";
 import HostItem from "./host-item";
@@ -22,9 +25,11 @@ import {
   TableRow,
 } from "../ui/table";
 import { loadFromCache, saveToCache } from "@/lib/local-storage";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, TrashIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { getDeepestSubdomain } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { RecordResponse } from "cloudflare/resources/dns/records.mjs";
 
 export default function CloudflareSide() {
   const { information, setInformation, tailflareState } = useTailflare();
@@ -60,13 +65,15 @@ export default function CloudflareSide() {
 
   async function handleSelectZone(id: string) {
     const records = await getCloudflareRecordsInZone(tailflareState, id);
-    const selectedZone = information.cloudflare.zones.find(zone => zone.id === id);
+    const selectedZone = information.cloudflare.zones.find(
+      (zone) => zone.id === id
+    );
 
     if (!selectedZone) {
       toast({
         title: "Error",
         description: "Selected zone not found",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -78,7 +85,7 @@ export default function CloudflareSide() {
           ...prev.cloudflare,
           selectedZone: {
             id: selectedZone.id,
-            name: selectedZone.name
+            name: selectedZone.name,
           },
           dnsRecords: records,
         },
@@ -156,6 +163,22 @@ export default function CloudflareSide() {
     };
   }, [tailflareState, debouncedFetch]);
 
+  async function handleDeleteDnsRecord(record: RecordResponse) {
+    try {
+      await deleteRecordByIdFromCloudflare(tailflareState, record.id, {
+        zone_id: information.cloudflare.selectedZone?.id ?? "",
+      });
+      toast({
+        title: `Deleted ${record.name} from Cloudflare`,
+      });
+
+      handleForceRefresh();
+    } catch {
+      handleForceRefresh();
+      toast({ title: "Unable to delete DNS record from Cloudflare" });
+    }
+  }
+
   return (
     <SideContainer>
       <div className="relative mx-auto w-fit">
@@ -183,8 +206,9 @@ export default function CloudflareSide() {
             <SelectContent>
               {information.cloudflare.zones.map((zone, idx) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${zone.id
-                    }`}</span>
+                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${
+                    zone.id
+                  }`}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -199,7 +223,6 @@ export default function CloudflareSide() {
               className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
             />
           </Button>
-          {isLoading && <Spinner />}
         </div>
       </div>
 
@@ -225,7 +248,27 @@ export default function CloudflareSide() {
                     )
                 )
                 .map((record) =>
-                  record ? <HostItem key={record.id} record={record} /> : null
+                  record ? (
+                    <HostItem key={record.id} record={record}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            size={"icon"}
+                            onClick={async () =>
+                              await handleDeleteDnsRecord(record)
+                            }
+                            className="group-hover:inline-flex hidden"
+                          >
+                            <TrashIcon />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete DNS record from Cloudflare</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </HostItem>
+                  ) : null
                 )}
             </TableBody>
           </Table>

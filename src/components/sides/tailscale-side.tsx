@@ -1,7 +1,11 @@
 import { useTailflare } from "@/contexts/tailflare-context";
 import SideContainer from "./side-container";
 import { Input } from "../ui/input";
-import { getTailscaleHosts } from "@/app/actions";
+import {
+  createCloudflareRecordInZone,
+  getCloudflareRecordsInZone,
+  getTailscaleHosts,
+} from "@/app/actions";
 import {
   Table,
   TableBody,
@@ -10,14 +14,16 @@ import {
   TableRow,
 } from "../ui/table";
 import HostItem from "./host-item";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ReactNode } from "react";
 import { debounce } from "lodash";
 import { Spinner } from "../ui/spinner";
 import { toast } from "@/hooks/use-toast";
 import { loadFromCache, saveToCache } from "@/lib/local-storage";
-import { RefreshCw } from "lucide-react";
+import { ArrowRightToLineIcon, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 import { getDeepestSubdomain } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { record } from "zod";
 
 export default function TailscaleSide() {
   const { tailflareState, information, setInformation } = useTailflare();
@@ -107,6 +113,63 @@ export default function TailscaleSide() {
     }
   }
 
+  async function handleSyncHostToCloudflare(fqdn: string) {
+    const hostname = fqdn.split(".")[0];
+    try {
+      const res = await createCloudflareRecordInZone(tailflareState, {
+        name: `${hostname}.${information.cloudflare.subdomain}`,
+        content: fqdn,
+        zone_id: information.cloudflare.selectedZone?.id ?? "",
+        type: "CNAME",
+      });
+      toast({
+        title: `Added ${fqdn} to Cloudflare`,
+        description: `${res.id}`,
+      });
+
+      // Force refresh after successful addition
+      await handleForceRefresh();
+
+      // Also refresh Cloudflare records
+      if (information.cloudflare.selectedZone) {
+        const records = await getCloudflareRecordsInZone(
+          tailflareState,
+          information.cloudflare.selectedZone.id
+        );
+
+        setInformation((prev) => {
+          const newInfo = {
+            ...prev,
+            cloudflare: {
+              ...prev.cloudflare,
+              dnsRecords: records,
+            },
+          };
+          saveToCache(newInfo);
+          return newInfo;
+        });
+      }
+    } catch (e) {
+      const err = (e as string)
+        .toString()
+        .substring((e as string).toString().indexOf("{"));
+
+      const parsed_err = JSON.parse(err) as {
+        result: null;
+        success: boolean;
+        errors: {
+          code: number;
+          message: string;
+        }[];
+      };
+
+      toast({
+        title: "Error occurred while adding host to Cloudflare",
+        description: `${parsed_err.errors[0].code} - ${parsed_err.errors[0].message}`,
+      });
+    }
+  }
+
   return (
     <SideContainer>
       <div className="flex flex-col gap-2 mx-auto w-fit">
@@ -169,7 +232,7 @@ export default function TailscaleSide() {
                       name: host,
                       content: undefined,
                     }}
-                  />
+                  ></HostItem>
                 ))}
             </TableBody>
           </Table>
@@ -206,7 +269,25 @@ export default function TailscaleSide() {
                       name: host,
                       content: undefined,
                     }}
-                  />
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          size={"icon"}
+                          onClick={async () =>
+                            await handleSyncHostToCloudflare(host)
+                          }
+                          className="group-hover:inline-flex hidden"
+                        >
+                          <ArrowRightToLineIcon />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Sync {`${host} to Cloudflare`}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </HostItem>
                 ))}
             </TableBody>
           </Table>

@@ -4,6 +4,8 @@ import { TailflareState } from "@/lib/schema-type";
 import { getCloudflareClient } from "@/lib/cloudflare-client";
 import {
   RecordCreateParams,
+  RecordDeleteParams,
+  RecordDeleteResponse,
   RecordResponse,
 } from "cloudflare/resources/dns/records.mjs";
 import { getTailscaleClient } from "@/lib/tailscale-client";
@@ -54,6 +56,20 @@ export async function getTailscaleHosts(tailflareState: TailflareState) {
   const client = getTailscaleClient(tailflareState);
 
   const response = await client.devices.list();
+
+  return response;
+}
+
+export async function deleteRecordByIdFromCloudflare(
+  tailflareState: TailflareState,
+  dnsRecordId: string,
+  recordDeleteParams: RecordDeleteParams
+): Promise<RecordDeleteResponse> {
+  const cloudflareClient = getCloudflareClient(tailflareState);
+  const response = await cloudflareClient.dns.records.delete(
+    dnsRecordId,
+    recordDeleteParams
+  );
 
   return response;
 }

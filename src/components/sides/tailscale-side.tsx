@@ -117,7 +117,10 @@ export default function TailscaleSide() {
     const hostname = fqdn.split(".")[0];
     try {
       const res = await createCloudflareRecordInZone(tailflareState, {
-        name: `${hostname}.${information.cloudflare.subdomain}`,
+        name: `${hostname}${
+          information.cloudflare.subdomain &&
+          "." + information.cloudflare.subdomain
+        }`,
         content: fqdn,
         zone_id: information.cloudflare.selectedZone?.id ?? "",
         type: "CNAME",
@@ -174,10 +177,10 @@ export default function TailscaleSide() {
     <SideContainer>
       <div className="flex flex-col gap-2 mx-auto w-fit">
         <div className="relative">
-          <h2 className="font-bold text-2xl text-background text-center">
+          <h2 className="font-bold text-background text-2xl text-center">
             Tailscale
           </h2>
-          <div className="top-0 left-10 -z-10 absolute bg-primary skew-x-6 w-36 h-7 -rotate-2"></div>
+          <div className="top-0 left-10 -z-10 absolute bg-primary w-36 h-7 -rotate-2 skew-x-6"></div>
         </div>
         <div className="flex justify-center items-center gap-2">
           <Input
@@ -278,7 +281,7 @@ export default function TailscaleSide() {
                           onClick={async () =>
                             await handleSyncHostToCloudflare(host)
                           }
-                          className="group-hover:inline-flex hidden"
+                          className="hidden group-hover:inline-flex"
                         >
                           <ArrowRightToLineIcon />
                         </Button>

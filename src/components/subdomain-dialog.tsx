@@ -14,9 +14,11 @@ import { InformationSchema } from "@/lib/schema-type";
 
 export function SubdomainDialog() {
   const { information, setInformation } = useTailflare();
-  const [subdomain, setSubdomain] = useState(information.cloudflare.subdomain || "");
+  const [subdomain, setSubdomain] = useState(
+    information.cloudflare.subdomain || ""
+  );
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +37,7 @@ export function SubdomainDialog() {
       });
 
       setError(null);
-      setOpen(false);
+      setEditing(false);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -44,29 +46,11 @@ export function SubdomainDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="group relative flex items-center gap-2"
-        >
-          <span>
-            {information.cloudflare.subdomain && information.cloudflare.selectedZone
-              ? `Current target subdomain: <hostname>.${information.cloudflare.subdomain}.${information.cloudflare.selectedZone.name}`
-              : "Set subdomain"}
-          </span>
-          <Pencil
-            className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
-            aria-hidden="true"
-          />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Set Subdomain</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+    <div>
+      {editing ? (
+        <form onSubmit={handleSubmit} className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span>{`<hostname>`}.</span>
             <Input
               id="subdomain"
               value={subdomain}
@@ -77,13 +61,29 @@ export function SubdomainDialog() {
               placeholder="Enter subdomain"
               className={error ? "border-red-500" : ""}
             />
-            {error && (
-              <p className="text-sm text-red-500">{error}</p>
-            )}
+            <span>.{information.cloudflare.selectedZone?.name}</span>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
           <Button type="submit">Save</Button>
         </form>
-      </DialogContent>
-    </Dialog >
+      ) : (
+        <Button
+          variant="outline"
+          className="group relative flex items-center gap-2"
+          onClick={() => setEditing(true)}
+        >
+          <span>
+            {information.cloudflare.subdomain &&
+            information.cloudflare.selectedZone
+              ? `Current target subdomain: <hostname>.${information.cloudflare.subdomain}.${information.cloudflare.selectedZone.name}`
+              : "Set subdomain"}
+          </span>
+          <Pencil
+            className="opacity-0 group-hover:opacity-100 w-4 h-4 transition-opacity"
+            aria-hidden="true"
+          />
+        </Button>
+      )}
+    </div>
   );
-} 
+}

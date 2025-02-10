@@ -114,6 +114,9 @@ export default function TailscaleSide() {
   }
 
   async function handleSyncHostToCloudflare(fqdn: string) {
+    toast({
+      title: "Adding host to Cloudflare",
+    });
     const hostname = fqdn.split(".")[0];
     try {
       const res = await createCloudflareRecordInZone(tailflareState, {

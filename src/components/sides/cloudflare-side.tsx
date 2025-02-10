@@ -164,6 +164,9 @@ export default function CloudflareSide() {
   }, [tailflareState, debouncedFetch]);
 
   async function handleDeleteDnsRecord(record: RecordResponse) {
+    toast({
+      title: "Deleting record from Cloudflare",
+    });
     try {
       await deleteRecordByIdFromCloudflare(tailflareState, record.id, {
         zone_id: information.cloudflare.selectedZone?.id ?? "",
@@ -183,11 +186,11 @@ export default function CloudflareSide() {
     <SideContainer>
       <div className="relative mx-auto w-fit">
         <h2 className="font-bold text-2xl">Cloudflare</h2>
-        <div className="top-2.5 -z-10 absolute bg-orange-500/80 skew-x-6 w-32 h-4 -rotate-2" />
+        <div className="top-2.5 -z-10 absolute bg-orange-500/80 w-32 h-4 -rotate-2 skew-x-6" />
       </div>
 
       <div className="items-center gap-2">
-        <div className="flex items-center gap-2 text-ellipsis overflow-hidden">
+        <div className="flex items-center gap-2 overflow-hidden text-ellipsis">
           <Select
             onValueChange={handleSelectZone}
             value={information.cloudflare.selectedZone?.id}
@@ -258,7 +261,7 @@ export default function CloudflareSide() {
                             onClick={async () =>
                               await handleDeleteDnsRecord(record)
                             }
-                            className="group-hover:inline-flex hidden"
+                            className="hidden group-hover:inline-flex"
                           >
                             <TrashIcon />
                           </Button>

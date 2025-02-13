@@ -42,7 +42,7 @@ export const InformationSchema = z.object({
           val.split(".").length <= 1 && val[-1] !== "." && val[0] !== ".",
         {
           message:
-            "Enter a valid subdomain. Currently only support up to 4th level. E.g. anguyen-workstation.engineering.aaanh.com",
+            "Enter a valid subdomain. Currently only support up to 5th level FQDN. E.g. anguyen-workstation.engineering.laptops.aaanh.com",
         }
       )
       .default(""),

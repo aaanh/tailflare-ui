@@ -30,6 +30,7 @@ import { Button } from "../ui/button";
 import { getDeepestSubdomain } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { RecordResponse } from "cloudflare/resources/dns/records.mjs";
+import { SelectSeparator } from "@radix-ui/react-select";
 
 export default function CloudflareSide() {
   const { information, setInformation, tailflareState } = useTailflare();
@@ -63,7 +64,27 @@ export default function CloudflareSide() {
     [tailflareState]
   );
 
-  async function handleSelectZone(id: string) {
+  async function handleSelectZone(id: string | undefined) {
+    if (!id) {
+      setInformation((prev: Information) => {
+        const newInfo = {
+          ...prev,
+          cloudflare: {
+            ...prev.cloudflare,
+            selectedZone: undefined,
+            dnsRecords: [],
+          },
+        };
+        saveToCache(newInfo);
+        return newInfo;
+      });
+      toast({
+        title: "Clear zone selection",
+      });
+
+      return;
+    }
+
     const records = await getCloudflareRecordsInZone(tailflareState, id);
     const selectedZone = information.cloudflare.zones.find(
       (zone) => zone.id === id
@@ -214,6 +235,18 @@ export default function CloudflareSide() {
                   }`}</span>
                 </SelectItem>
               ))}
+              <SelectSeparator />
+              <Button
+                className="px-2 w-full"
+                variant="secondary"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectZone(undefined);
+                }}
+              >
+                Clear
+              </Button>
             </SelectContent>
           </Select>
           <Button

@@ -10,6 +10,7 @@ import Footer from "./footer";
 import { ApiKeyStatus } from "../api-key-status";
 import { SubdomainDialog } from "../subdomain-dialog";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import SuperActionsMenu from "../super-actions";
 
 export default function ClientWrapper() {
   return (
@@ -18,7 +19,10 @@ export default function ClientWrapper() {
         <TailflareProvider>
           <Header />
           <ApiKeyStatus />
-          <SubdomainDialog />
+          <div className="flex flex-wrap gap-2">
+            <SubdomainDialog />
+            <SuperActionsMenu />
+          </div>
           <div className="gap-2 grid lg:grid-cols-2">
             <TailscaleSide />
             <CloudflareSide />

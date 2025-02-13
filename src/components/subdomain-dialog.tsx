@@ -1,11 +1,4 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
@@ -58,7 +51,7 @@ export function SubdomainDialog() {
                 setSubdomain(e.target.value);
                 setError(null);
               }}
-              placeholder="Enter subdomain"
+              placeholder="subdomain"
               className={error ? "border-red-500" : ""}
             />
             <span>.{information.cloudflare.selectedZone?.name}</span>
@@ -73,10 +66,15 @@ export function SubdomainDialog() {
           onClick={() => setEditing(true)}
         >
           <span>
-            {information.cloudflare.subdomain &&
-            information.cloudflare.selectedZone
-              ? `Current target subdomain: <hostname>.${information.cloudflare.subdomain}.${information.cloudflare.selectedZone.name}`
-              : "Set subdomain"}
+            {information.cloudflare.selectedZone
+              ? `Current target subdomain: ${[
+                  "<hostname>",
+                  information.cloudflare.subdomain,
+                  information.cloudflare.selectedZone.name,
+                ]
+                  .filter((str) => str.length > 0)
+                  .join(".")}`
+              : "Choose Cloudflare zone and enter subdomain"}
           </span>
           <Pencil
             className="opacity-0 group-hover:opacity-100 w-4 h-4 transition-opacity"

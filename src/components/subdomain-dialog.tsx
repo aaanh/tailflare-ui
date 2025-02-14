@@ -41,7 +41,7 @@ export function SubdomainDialog() {
   return (
     <div>
       {editing ? (
-        <form onSubmit={handleSubmit} className="flex items-center gap-4">
+        <form onSubmit={handleSubmit} className="flex items-center gap-4 border p-2 rounded-lg">
           <div className="flex items-center gap-2">
             <span>{`<hostname>`}.</span>
             <Input
@@ -62,6 +62,7 @@ export function SubdomainDialog() {
       ) : (
         <Button
           variant="outline"
+          size={"lg"}
           className="group relative flex items-center gap-2"
           onClick={() => setEditing(true)}
         >

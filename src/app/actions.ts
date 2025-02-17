@@ -1,6 +1,6 @@
 "use server";
 
-import { TailflareState } from "@/lib/schema-type";
+import { Information, TailflareState } from "@/lib/schema-type";
 import { getCloudflareClient } from "@/lib/cloudflare-client";
 import {
   RecordCreateParams,
@@ -72,4 +72,25 @@ export async function deleteRecordByIdFromCloudflare(
   );
 
   return response;
+}
+
+export async function createMultipleRecordsInCloudflareZone(
+  recordCreateParams: RecordCreateParams.CNAMERecord[],
+  tailflareState: TailflareState,
+  information: Information
+) {
+  const cloudflareClient = getCloudflareClient(tailflareState);
+
+  if (information.cloudflare.selectedZone?.id) {
+    const response = await cloudflareClient.dns.records.batch({
+      posts: recordCreateParams,
+      zone_id: information.cloudflare.selectedZone.id,
+    });
+
+    return response;
+  } else {
+    throw new Error(
+      "Unable to perform batch action: Add all hosts to Cloudflare."
+    );
+  }
 }

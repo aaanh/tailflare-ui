@@ -8,7 +8,10 @@ import {
 import { BoxesIcon, FolderPlusIcon, Trash2Icon, ZapIcon } from "lucide-react";
 import { cn, getDeepestSubdomain, handleForceRefresh } from "@/lib/utils";
 import { buttonVariants } from "./ui/button";
-import { createMultipleRecordsInCloudflareZone, deleteMultipleRecordsInCloudflareZone } from "@/app/actions";
+import {
+  createMultipleRecordsInCloudflareZone,
+  deleteMultipleRecordsInCloudflareZone,
+} from "@/app/actions";
 import { RecordCreateParams } from "cloudflare/resources/dns/records.mjs";
 import { useToast } from "@/hooks/use-toast";
 import { getMatchedHosts } from "@/lib/utils";
@@ -24,12 +27,11 @@ export default function SuperActionsMenu() {
         description: "Please select an available zone from the dropdown menu.",
       });
 
-      await handleForceRefresh(
-        tailflareState,
-        information,
-        setInformation,
-        { fetchZones: false, fetchRecords: true, fetchHosts: false }
-      )
+      await handleForceRefresh(tailflareState, information, setInformation, {
+        fetchZones: false,
+        fetchRecords: true,
+        fetchHosts: false,
+      });
 
       return;
     }
@@ -37,9 +39,10 @@ export default function SuperActionsMenu() {
     const selectedZoneId = information.cloudflare.selectedZone.id;
     const records: RecordCreateParams.CNAMERecord[] =
       information.tailscale.hosts.map((host) => ({
-        name: `${host.split(".")[0]}${information.cloudflare.subdomain &&
+        name: `${host.split(".")[0]}${
+          information.cloudflare.subdomain &&
           "." + information.cloudflare.subdomain
-          }`,
+        }`,
         zone_id: selectedZoneId,
         type: "CNAME",
         content: host,
@@ -56,12 +59,11 @@ export default function SuperActionsMenu() {
       description: JSON.stringify(res),
     });
 
-    await handleForceRefresh(
-      tailflareState,
-      information,
-      setInformation,
-      { fetchZones: false, fetchRecords: true, fetchHosts: false }
-    )
+    await handleForceRefresh(tailflareState, information, setInformation, {
+      fetchZones: false,
+      fetchRecords: true,
+      fetchHosts: false,
+    });
   }
 
   async function handleRemoveAllHosts() {
@@ -79,7 +81,18 @@ export default function SuperActionsMenu() {
     }
 
     try {
-      const recordsToDelete = information.cloudflare.dnsRecords.filter((record) => matchedHosts.some((host) => host && getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? ""))).map((filtered) => { return { id: filtered.id } })
+      const recordsToDelete = information.cloudflare.dnsRecords
+        .filter((record) =>
+          matchedHosts.some(
+            (host) =>
+              host &&
+              getDeepestSubdomain(host) ===
+                getDeepestSubdomain(record.name ?? "")
+          )
+        )
+        .map((filtered) => {
+          return { id: filtered.id };
+        });
 
       await deleteMultipleRecordsInCloudflareZone(
         recordsToDelete,
@@ -87,46 +100,54 @@ export default function SuperActionsMenu() {
         information
       );
 
-
       toast({
         title: "Successfully removed hosts",
         description: `Removed ${matchedHosts.length} DNS records from Cloudflare`,
       });
 
-      await handleForceRefresh(
-        tailflareState,
-        information,
-        setInformation,
-        { fetchZones: false, fetchRecords: true, fetchHosts: false }
-      )
+      await handleForceRefresh(tailflareState, information, setInformation, {
+        fetchZones: false,
+        fetchRecords: true,
+        fetchHosts: false,
+      });
     } catch (error) {
       toast({
         title: "Failed to remove hosts",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
 
-      await handleForceRefresh(
-        tailflareState,
-        information,
-        setInformation,
-        { fetchZones: false, fetchRecords: true, fetchHosts: false }
-      )
+      await handleForceRefresh(tailflareState, information, setInformation, {
+        fetchZones: false,
+        fetchRecords: true,
+        fetchHosts: false,
+      });
     }
   }
+
+  /**
+   *
+   * @param from The subdomain to modify. Use '*' to target all matched hosts regardless of subdomain. Leave empty to target hosts under the domain, i.e. hostname.domain.tld
+   * @param to
+   */
+  async function handleSubdomainBulkChange(from: string, to: string) {}
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <span
-          className={cn(buttonVariants({ variant: "outline" }), "text-yellow-500")}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "text-yellow-500"
+          )}
         >
           <ZapIcon className="fill-yellow-500/50" /> Super Actions
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         <DropdownMenuItem
-          className="cursor-pointer text-affirmative"
+          className="text-affirmative cursor-pointer"
           onClick={handleAddAllHosts}
         >
           <FolderPlusIcon />

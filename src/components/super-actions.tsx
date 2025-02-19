@@ -119,14 +119,14 @@ export default function SuperActionsMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger>
         <span
-          className={cn(buttonVariants({ variant: "default", size: "icon" }))}
+          className={cn(buttonVariants({ variant: "outline" }), "text-yellow-500")}
         >
-          <ZapIcon />
+          <ZapIcon className="fill-yellow-500/50" /> Super Actions
         </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 font-sans">
+      <DropdownMenuContent className="w-56">
         <DropdownMenuItem
-          className="cursor-pointer"
+          className="cursor-pointer text-affirmative"
           onClick={handleAddAllHosts}
         >
           <FolderPlusIcon />
@@ -136,7 +136,7 @@ export default function SuperActionsMenu() {
           <BoxesIcon /> Change all added subdomains
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="text-red-500"
+          className="text-red-500 cursor-pointer"
           onClick={handleRemoveAllHosts}
         >
           <Trash2Icon /> Remove all hosts from Cloudflare

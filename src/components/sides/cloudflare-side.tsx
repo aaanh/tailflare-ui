@@ -188,8 +188,7 @@ export default function CloudflareSide() {
   return (
     <SideContainer>
       <div className="relative mx-auto w-fit">
-        <h2 className="font-bold text-2xl">Cloudflare</h2>
-        <div className="top-2.5 -z-10 absolute bg-orange-500/80 w-32 h-4 -rotate-2 skew-x-6" />
+        <h2 className="font-bold text-2xl text-orange-500">Cloudflare</h2>
       </div>
 
       <div className="items-center gap-2">

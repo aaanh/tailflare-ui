@@ -68,13 +68,13 @@ export function SubdomainDialog() {
         >
           <span>
             {information.cloudflare.selectedZone
-              ? `Current target subdomain: ${[
-                  "<hostname>",
-                  information.cloudflare.subdomain,
-                  information.cloudflare.selectedZone.name,
-                ]
-                  .filter((str) => str.length > 0)
-                  .join(".")}`
+              ? `Target subdomain: ${[
+                "<hostname>",
+                information.cloudflare.subdomain,
+                information.cloudflare.selectedZone.name,
+              ]
+                .filter((str) => str.length > 0)
+                .join(".")}`
               : "Choose Cloudflare zone and enter subdomain"}
           </span>
           <Pencil

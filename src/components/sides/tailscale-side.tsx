@@ -60,7 +60,7 @@ export default function TailscaleSide() {
         setIsLoading(false);
       }
     }, 500),
-    [tailflareState]
+    [tailflareState, setInformation, setIsLoading, toast]
   );
 
   // Load cached data on mount

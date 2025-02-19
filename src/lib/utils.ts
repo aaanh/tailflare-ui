@@ -3,6 +3,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { saveToCache } from "./local-storage";
 import { Information, TailflareState } from "./schema-type";
+import { RecordResponse } from "cloudflare/resources/dns/records.mjs";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -77,7 +78,7 @@ export function getDeepestSubdomain(hostname: string): string {
   return hostname.split(".")[0];
 }
 
-export function getMatchedHosts(tailscaleHosts: string[], cloudflareRecords: any[]) {
+export function getMatchedHosts(tailscaleHosts: string[], cloudflareRecords: RecordResponse[]) {
   return tailscaleHosts.filter((host) =>
     cloudflareRecords.some(
       (record) =>
@@ -87,7 +88,7 @@ export function getMatchedHosts(tailscaleHosts: string[], cloudflareRecords: any
   );
 }
 
-export function getUnmatchedHosts(tailscaleHosts: string[], cloudflareRecords: any[]) {
+export function getUnmatchedHosts(tailscaleHosts: string[], cloudflareRecords: RecordResponse[]) {
   return tailscaleHosts.filter(
     (host) =>
       !cloudflareRecords.some(
@@ -115,7 +116,7 @@ export async function handleForceRefresh(
   } = options ?? {};
 
   try {
-    let newInfo = { ...information };
+    const newInfo = { ...information };
 
     // Fetch Cloudflare zones if requested
     if (fetchZones) {

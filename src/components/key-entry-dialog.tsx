@@ -111,7 +111,7 @@ export default function KeyEntryDialog() {
 
   useEffect(() => {
     initializeStoredState(hashKey, setTailflareState);
-  }, [hashKey]);
+  }, [hashKey, setTailflareState]);
 
   async function handleSave() {
     if (!hashKey) {

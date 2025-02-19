@@ -62,7 +62,7 @@ export default function CloudflareSide() {
         setIsLoading(false);
       }
     }, 500),
-    [tailflareState]
+    [tailflareState, setInformation, setIsLoading]
   );
 
   async function handleSelectZone(id: string | undefined) {
@@ -152,7 +152,7 @@ export default function CloudflareSide() {
     if (cached) {
       setInformation(cached);
     }
-  }, []);
+  }, [setInformation]);
 
   // Set up effect to fetch data when cloudflare state changes
   useEffect(() => {

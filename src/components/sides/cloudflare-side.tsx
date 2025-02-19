@@ -31,6 +31,7 @@ import { getDeepestSubdomain } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { RecordResponse } from "cloudflare/resources/dns/records.mjs";
 import { SelectSeparator } from "@radix-ui/react-select";
+import { handleForceRefresh } from "@/lib/utils";
 
 export default function CloudflareSide() {
   const { information, setInformation, tailflareState } = useTailflare();
@@ -119,41 +120,22 @@ export default function CloudflareSide() {
     });
   }
 
-  async function handleForceRefresh() {
+  async function handleRefresh() {
     setIsLoading(true);
     try {
-      // Fetch zones
-      const response = await getCloudflareZones(tailflareState);
-      const zones = response.map((zone) => ({
-        id: zone.id,
-        name: zone.name,
-      }));
-
-      // If there's a selected zone, fetch its records
-      let records = information.cloudflare.dnsRecords;
-      if (information.cloudflare.selectedZone) {
-        records = await getCloudflareRecordsInZone(
-          tailflareState,
-          information.cloudflare.selectedZone.id
-        );
+      const result = await handleForceRefresh(
+        tailflareState,
+        information,
+        setInformation,
+        { fetchHosts: false }
+      );
+      if (result.success) {
+        toast({
+          title: "Cache refreshed successfully",
+        });
+      } else {
+        throw result.error;
       }
-
-      setInformation((prev) => {
-        const newInfo = {
-          ...prev,
-          cloudflare: {
-            ...prev.cloudflare,
-            zones,
-            dnsRecords: records,
-          },
-        };
-        saveToCache(newInfo);
-        return newInfo;
-      });
-
-      toast({
-        title: "Cache refreshed successfully",
-      });
     } catch (error) {
       toast({
         title: "Failed to refresh cache",
@@ -196,9 +178,9 @@ export default function CloudflareSide() {
         title: `Deleted ${record.name} from Cloudflare`,
       });
 
-      handleForceRefresh();
+      handleRefresh();
     } catch {
-      handleForceRefresh();
+      handleRefresh();
       toast({ title: "Unable to delete DNS record from Cloudflare" });
     }
   }
@@ -230,9 +212,8 @@ export default function CloudflareSide() {
             <SelectContent>
               {information.cloudflare.zones.map((zone, idx) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${
-                    zone.id
-                  }`}</span>
+                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${zone.id
+                    }`}</span>
                 </SelectItem>
               ))}
               <SelectSeparator />
@@ -252,7 +233,7 @@ export default function CloudflareSide() {
           <Button
             variant="outline"
             size="icon"
-            onClick={handleForceRefresh}
+            onClick={handleRefresh}
             disabled={isLoading}
           >
             <RefreshCw

@@ -3,6 +3,7 @@
 import { Information, TailflareState } from "@/lib/schema-type";
 import { getCloudflareClient } from "@/lib/cloudflare-client";
 import {
+  RecordBatchParams,
   RecordCreateParams,
   RecordDeleteParams,
   RecordDeleteResponse,
@@ -88,6 +89,27 @@ export async function createMultipleRecordsInCloudflareZone(
     });
 
     return response;
+  } else {
+    throw new Error(
+      "Unable to perform batch action: Add all hosts to Cloudflare."
+    );
+  }
+}
+
+export async function deleteMultipleRecordsInCloudflareZone(
+  recordDeleteParams: RecordBatchParams.Delete[],
+  tailflareState: TailflareState,
+  information: Information
+) {
+  const cloudflareClient = getCloudflareClient(tailflareState);
+
+  if (information.cloudflare.selectedZone?.id) {
+    const response = await cloudflareClient.dns.records.batch({
+      deletes: recordDeleteParams,
+      zone_id: information.cloudflare.selectedZone.id
+    })
+
+    return response
   } else {
     throw new Error(
       "Unable to perform batch action: Add all hosts to Cloudflare."

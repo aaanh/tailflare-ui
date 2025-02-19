@@ -1,5 +1,8 @@
+import { getCloudflareRecordsInZone, getCloudflareZones, getTailscaleHosts } from "@/app/actions";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { saveToCache } from "./local-storage";
+import { Information, TailflareState } from "./schema-type";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -72,4 +75,90 @@ export async function decryptData(encryptedText: string, hashKey: string) {
 
 export function getDeepestSubdomain(hostname: string): string {
   return hostname.split(".")[0];
+}
+
+export function getMatchedHosts(tailscaleHosts: string[], cloudflareRecords: any[]) {
+  return tailscaleHosts.filter((host) =>
+    cloudflareRecords.some(
+      (record) =>
+        record &&
+        getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
+    )
+  );
+}
+
+export function getUnmatchedHosts(tailscaleHosts: string[], cloudflareRecords: any[]) {
+  return tailscaleHosts.filter(
+    (host) =>
+      !cloudflareRecords.some(
+        (record) =>
+          record &&
+          getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
+      )
+  );
+}
+
+export async function handleForceRefresh(
+  tailflareState: TailflareState,
+  information: Information,
+  setInformation: (info: Information) => void,
+  options?: {
+    fetchZones?: boolean;
+    fetchRecords?: boolean;
+    fetchHosts?: boolean;
+  }
+) {
+  const {
+    fetchZones = true,
+    fetchRecords = true,
+    fetchHosts = true
+  } = options ?? {};
+
+  try {
+    let newInfo = { ...information };
+
+    // Fetch Cloudflare zones if requested
+    if (fetchZones) {
+      const response = await getCloudflareZones(tailflareState);
+      const zones = response.map((zone) => ({
+        id: zone.id,
+        name: zone.name,
+      }));
+      newInfo.cloudflare = {
+        ...newInfo.cloudflare,
+        zones,
+      };
+    }
+
+    // Fetch DNS records if there's a selected zone and requested
+    if (fetchRecords && information.cloudflare.selectedZone) {
+      const records = await getCloudflareRecordsInZone(
+        tailflareState,
+        information.cloudflare.selectedZone.id
+      );
+      newInfo.cloudflare = {
+        ...newInfo.cloudflare,
+        dnsRecords: records,
+      };
+    }
+
+    // Fetch Tailscale hosts if requested
+    if (fetchHosts) {
+      const res = await getTailscaleHosts(tailflareState);
+      const hosts = res.devices.map(
+        (device: { name: string }) => device.name
+      ) as string[];
+      newInfo.tailscale = {
+        ...newInfo.tailscale,
+        hosts,
+      };
+    }
+
+    setInformation(newInfo);
+    saveToCache(newInfo);
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error };
+  }
 }

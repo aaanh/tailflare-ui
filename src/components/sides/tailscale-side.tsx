@@ -21,7 +21,7 @@ import { toast } from "@/hooks/use-toast";
 import { loadFromCache, saveToCache } from "@/lib/local-storage";
 import { ArrowRightToLineIcon, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
-import { getDeepestSubdomain } from "@/lib/utils";
+import { getDeepestSubdomain, getMatchedHosts, getUnmatchedHosts, handleForceRefresh } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { record } from "zod";
 
@@ -81,28 +81,22 @@ export default function TailscaleSide() {
     };
   }, [tailflareState, debouncedFetch]);
 
-  async function handleForceRefresh() {
+  async function handleRefresh() {
     setIsLoading(true);
     try {
-      const res = await getTailscaleHosts(tailflareState);
-      const hosts = res.devices.map(
-        (device: { name: string }) => device.name
-      ) as string[];
-
-      setInformation((prev) => {
-        const newInfo = {
-          ...prev,
-          tailscale: {
-            hosts: hosts,
-          },
-        };
-        saveToCache(newInfo);
-        return newInfo;
-      });
-
-      toast({
-        title: "Cache refreshed successfully",
-      });
+      const result = await handleForceRefresh(
+        tailflareState,
+        information,
+        setInformation,
+        { fetchZones: false, fetchRecords: false }
+      );
+      if (result.success) {
+        toast({
+          title: "Cache refreshed successfully",
+        });
+      } else {
+        throw result.error;
+      }
     } catch (error) {
       toast({
         title: "Failed to refresh cache",
@@ -120,10 +114,9 @@ export default function TailscaleSide() {
     const hostname = fqdn.split(".")[0];
     try {
       const res = await createCloudflareRecordInZone(tailflareState, {
-        name: `${hostname}${
-          information.cloudflare.subdomain &&
+        name: `${hostname}${information.cloudflare.subdomain &&
           "." + information.cloudflare.subdomain
-        }`,
+          }`,
         content: fqdn,
         zone_id: information.cloudflare.selectedZone?.id ?? "",
         type: "CNAME",
@@ -134,7 +127,7 @@ export default function TailscaleSide() {
       });
 
       // Force refresh after successful addition
-      await handleForceRefresh();
+      await handleRefresh();
 
       // Also refresh Cloudflare records
       if (information.cloudflare.selectedZone) {
@@ -197,7 +190,7 @@ export default function TailscaleSide() {
           <Button
             variant="outline"
             size="icon"
-            onClick={handleForceRefresh}
+            onClick={handleRefresh}
             disabled={isLoading}
           >
             <RefreshCw
@@ -217,29 +210,23 @@ export default function TailscaleSide() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {information.tailscale.hosts
-                .filter((host) =>
-                  information.cloudflare.dnsRecords.some(
-                    (record) =>
-                      record &&
-                      getDeepestSubdomain(host) ===
-                        getDeepestSubdomain(record.name ?? "")
-                  )
-                )
-                .map((host) => (
-                  <HostItem
-                    key={host}
-                    record={{
-                      id: "placeholder-id",
-                      created_on: new Date().toISOString(),
-                      meta: {},
-                      modified_on: new Date().toISOString(),
-                      proxiable: false,
-                      name: host,
-                      content: undefined,
-                    }}
-                  ></HostItem>
-                ))}
+              {getMatchedHosts(
+                information.tailscale.hosts,
+                information.cloudflare.dnsRecords
+              ).map((host) => (
+                <HostItem
+                  key={host}
+                  record={{
+                    id: "placeholder-id",
+                    created_on: new Date().toISOString(),
+                    meta: {},
+                    modified_on: new Date().toISOString(),
+                    proxiable: false,
+                    name: host,
+                    content: undefined,
+                  }}
+                ></HostItem>
+              ))}
             </TableBody>
           </Table>
         </div>
@@ -253,48 +240,41 @@ export default function TailscaleSide() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {information.tailscale.hosts
-                .filter(
-                  (host) =>
-                    !information.cloudflare.dnsRecords.some(
-                      (record) =>
-                        record &&
-                        getDeepestSubdomain(host) ===
-                          getDeepestSubdomain(record.name ?? "")
-                    )
-                )
-                .map((host) => (
-                  <HostItem
-                    key={host}
-                    record={{
-                      id: "placeholder-id",
-                      created_on: new Date().toISOString(),
-                      meta: {},
-                      modified_on: new Date().toISOString(),
-                      proxiable: false,
-                      name: host,
-                      content: undefined,
-                    }}
-                  >
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          size={"icon"}
-                          onClick={async () =>
-                            await handleSyncHostToCloudflare(host)
-                          }
-                          className="hidden group-hover:inline-flex"
-                        >
-                          <ArrowRightToLineIcon />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Sync {`${host} to Cloudflare`}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </HostItem>
-                ))}
+              {getUnmatchedHosts(
+                information.tailscale.hosts,
+                information.cloudflare.dnsRecords
+              ).map((host) => (
+                <HostItem
+                  key={host}
+                  record={{
+                    id: "placeholder-id",
+                    created_on: new Date().toISOString(),
+                    meta: {},
+                    modified_on: new Date().toISOString(),
+                    proxiable: false,
+                    name: host,
+                    content: undefined,
+                  }}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        size={"icon"}
+                        onClick={async () =>
+                          await handleSyncHostToCloudflare(host)
+                        }
+                        className="hidden group-hover:inline-flex"
+                      >
+                        <ArrowRightToLineIcon />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Sync {`${host} to Cloudflare`}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </HostItem>
+              ))}
             </TableBody>
           </Table>
         </div>

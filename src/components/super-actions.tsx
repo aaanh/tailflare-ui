@@ -6,14 +6,15 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { BoxesIcon, FolderPlusIcon, Trash2Icon, ZapIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getDeepestSubdomain, handleForceRefresh } from "@/lib/utils";
 import { buttonVariants } from "./ui/button";
-import { createMultipleRecordsInCloudflareZone } from "@/app/actions";
+import { createMultipleRecordsInCloudflareZone, deleteMultipleRecordsInCloudflareZone } from "@/app/actions";
 import { RecordCreateParams } from "cloudflare/resources/dns/records.mjs";
 import { useToast } from "@/hooks/use-toast";
+import { getMatchedHosts } from "@/lib/utils";
 
 export default function SuperActionsMenu() {
-  const { information, tailflareState } = useTailflare();
+  const { information, tailflareState, setInformation } = useTailflare();
   const { toast } = useToast();
 
   async function handleAddAllHosts() {
@@ -22,16 +23,23 @@ export default function SuperActionsMenu() {
         title: "Missing target Cloudflare Zone",
         description: "Please select an available zone from the dropdown menu.",
       });
+
+      await handleForceRefresh(
+        tailflareState,
+        information,
+        setInformation,
+        { fetchZones: false, fetchRecords: true, fetchHosts: false }
+      )
+
       return;
     }
 
     const selectedZoneId = information.cloudflare.selectedZone.id;
     const records: RecordCreateParams.CNAMERecord[] =
       information.tailscale.hosts.map((host) => ({
-        name: `${host.split(".")[0]}${
-          information.cloudflare.subdomain &&
+        name: `${host.split(".")[0]}${information.cloudflare.subdomain &&
           "." + information.cloudflare.subdomain
-        }`,
+          }`,
         zone_id: selectedZoneId,
         type: "CNAME",
         content: host,
@@ -47,9 +55,65 @@ export default function SuperActionsMenu() {
       title: "Successfully executed batch action: Added all hosts.",
       description: JSON.stringify(res),
     });
+
+    await handleForceRefresh(
+      tailflareState,
+      information,
+      setInformation,
+      { fetchZones: false, fetchRecords: true, fetchHosts: false }
+    )
   }
 
-  async function handleRemoveAllHosts() {}
+  async function handleRemoveAllHosts() {
+    const matchedHosts = getMatchedHosts(
+      information.tailscale.hosts,
+      information.cloudflare.dnsRecords
+    );
+
+    if (matchedHosts.length === 0) {
+      toast({
+        title: "No hosts to remove",
+        description: "There are no matched hosts in Cloudflare to remove.",
+      });
+      return;
+    }
+
+    try {
+      const recordsToDelete = information.cloudflare.dnsRecords.filter((record) => matchedHosts.some((host) => host && getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? ""))).map((filtered) => { return { id: filtered.id } })
+
+      await deleteMultipleRecordsInCloudflareZone(
+        recordsToDelete,
+        tailflareState,
+        information
+      );
+
+
+      toast({
+        title: "Successfully removed hosts",
+        description: `Removed ${matchedHosts.length} DNS records from Cloudflare`,
+      });
+
+      await handleForceRefresh(
+        tailflareState,
+        information,
+        setInformation,
+        { fetchZones: false, fetchRecords: true, fetchHosts: false }
+      )
+    } catch (error) {
+      toast({
+        title: "Failed to remove hosts",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+
+      await handleForceRefresh(
+        tailflareState,
+        information,
+        setInformation,
+        { fetchZones: false, fetchRecords: true, fetchHosts: false }
+      )
+    }
+  }
 
   return (
     <DropdownMenu>

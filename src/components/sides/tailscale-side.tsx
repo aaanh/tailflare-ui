@@ -21,7 +21,12 @@ import { toast } from "@/hooks/use-toast";
 import { loadFromCache, saveToCache } from "@/lib/local-storage";
 import { ArrowRightToLineIcon, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
-import { getDeepestSubdomain, getMatchedHosts, getUnmatchedHosts, handleForceRefresh } from "@/lib/utils";
+import {
+  getDeepestSubdomain,
+  getMatchedHosts,
+  getUnmatchedHosts,
+  handleForceRefresh,
+} from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { record } from "zod";
 
@@ -111,12 +116,22 @@ export default function TailscaleSide() {
     toast({
       title: "Adding host to Cloudflare",
     });
+
+    if (!information.cloudflare.selectedZone) {
+      toast({
+        variant: "destructive",
+        title: "Please select a Cloudflare zone first.",
+      });
+      return;
+    }
+
     const hostname = fqdn.split(".")[0];
     try {
       const res = await createCloudflareRecordInZone(tailflareState, {
-        name: `${hostname}${information.cloudflare.subdomain &&
+        name: `${hostname}${
+          information.cloudflare.subdomain &&
           "." + information.cloudflare.subdomain
-          }`,
+        }`,
         content: fqdn,
         zone_id: information.cloudflare.selectedZone?.id ?? "",
         type: "CNAME",

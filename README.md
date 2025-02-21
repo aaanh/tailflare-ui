@@ -30,4 +30,4 @@ npm install && npm run dev
 
 # Contributions
 
-Issue reports and pull requests are much welcomed as long as you follow the template from Github: https://github.com/github/docs/blob/1fa5506d74e16b33a41642309b4e3dbef2d440e2/.github/CONTRIBUTING.md 🚀
+Issue reports and pull requests are much welcomed as long as you follow the template from Github: https://github.com/github/docs/blob/1fa5506d74e16b33a41642309b4e3dbef2d440e2/.github/CONTRIBUTING.md 🚀.

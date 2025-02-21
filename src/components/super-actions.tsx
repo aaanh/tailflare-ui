@@ -37,9 +37,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { DialogClose, DialogTrigger } from "@radix-ui/react-dialog";
+import {
+  DialogClose,
+  DialogDescription,
+  DialogTrigger,
+} from "@radix-ui/react-dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import usageText from "@/lib/usage-text";
 
 export default function SuperActionsMenu() {
   const { information, tailflareState, setInformation } = useTailflare();
@@ -260,6 +265,9 @@ export default function SuperActionsMenu() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Changing all added subdomains</DialogTitle>
+                <DialogDescription>
+                  {usageText.bulkChangeSubdomains}
+                </DialogDescription>
               </DialogHeader>
               <div className="gap-2 grid">
                 <div className="items-center gap-1 grid grid-cols-[1fr_2fr]">

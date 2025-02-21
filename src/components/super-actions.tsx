@@ -5,16 +5,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { BoxesIcon, FolderPlusIcon, Trash2Icon, ZapIcon } from "lucide-react";
+import {
+  BoxesIcon,
+  ChevronDownIcon,
+  FolderPlusIcon,
+  LandPlotIcon,
+  TargetIcon,
+  Trash2Icon,
+  ZapIcon,
+} from "lucide-react";
 import { cn, getDeepestSubdomain, handleForceRefresh } from "@/lib/utils";
 import { Button, buttonVariants } from "./ui/button";
 import {
   createMultipleRecordsInCloudflareZone,
   deleteMultipleRecordsInCloudflareZone,
+  UpdateMultipleRecordsInCloudflareZone,
 } from "@/app/actions";
 import {
   BatchPatchParam,
   RecordCreateParams,
+  RecordResponse,
 } from "cloudflare/resources/dns/records.mjs";
 import { useToast } from "@/hooks/use-toast";
 import { getMatchedHosts } from "@/lib/utils";
@@ -27,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { DialogDescription, DialogTrigger } from "@radix-ui/react-dialog";
+import { DialogClose, DialogTrigger } from "@radix-ui/react-dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
@@ -157,21 +167,67 @@ export default function SuperActionsMenu() {
   async function handleSubdomainBulkChange() {
     const { from, to } = bulkSubdomainChangeParams;
 
-    const sourceSubdomain = SubdomainSchema.safeParse(from);
     const matchedHosts: BatchPatchParam.CNAMERecord[] =
-      information.cloudflare.dnsRecords
-        .filter((record) =>
-          information.tailscale.hosts.some(
-            (host) =>
-              host &&
-              getDeepestSubdomain(host) ===
-                getDeepestSubdomain(record.name ?? "")
-          )
+      information.cloudflare.dnsRecords.filter((record) =>
+        information.tailscale.hosts.some(
+          (host) =>
+            host &&
+            getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
         )
-        .filter((record) =>
-          record?.name?.includes(from)
-        ) as BatchPatchParam.CNAMERecord[];
-    console.log(matchedHosts);
+      ) as RecordResponse.CNAMERecord[];
+
+    console.log("Matched hosts", matchedHosts);
+
+    let prepped = [];
+
+    switch (from) {
+      case "*":
+        prepped = matchedHosts.map((record) => ({
+          id: record.id,
+          name:
+            getDeepestSubdomain(record.name ?? "") +
+            (to.length > 0 ? `.${to}` : ""),
+        }));
+        break;
+      case "":
+        prepped = matchedHosts
+          .filter((record) => record.name?.split(".").length === 3)
+          .map((record) => ({
+            id: record.id,
+            name:
+              getDeepestSubdomain(record.name ?? "") +
+              (to.length > 0 ? `.${to}` : ""),
+          }));
+        break;
+      default:
+        prepped = matchedHosts
+          .filter((record) => record.name?.includes(from))
+          .map((record) => ({
+            id: record.id,
+            name:
+              getDeepestSubdomain(record.name ?? "") +
+              (to.length > 0 ? `.${to}` : ""),
+          }));
+    }
+
+    console.log("Prepped", prepped);
+
+    const res = await UpdateMultipleRecordsInCloudflareZone(
+      prepped,
+      tailflareState,
+      information
+    );
+
+    toast({
+      title: "Executed batch update",
+      description: JSON.stringify(res),
+    });
+
+    await handleForceRefresh(tailflareState, information, setInformation, {
+      fetchZones: false,
+      fetchRecords: true,
+      fetchHosts: true,
+    });
   }
 
   return (
@@ -205,9 +261,12 @@ export default function SuperActionsMenu() {
               <DialogHeader>
                 <DialogTitle>Changing all added subdomains</DialogTitle>
               </DialogHeader>
-              <div>
-                <div>
-                  <Label>Source subdomain</Label>
+              <div className="gap-2 grid">
+                <div className="items-center gap-1 grid grid-cols-[1fr_2fr]">
+                  <Label className="flex items-center gap-2">
+                    <LandPlotIcon />
+                    Source subdomain
+                  </Label>
                   <Input
                     value={bulkSubdomainChangeParams.from}
                     onChange={(e) =>
@@ -218,8 +277,11 @@ export default function SuperActionsMenu() {
                     }
                   />
                 </div>
-                <div>
-                  <Label>Target subdomain</Label>
+                <div className="items-center gap-1 grid grid-cols-[1fr_2fr]">
+                  <Label className="flex items-center gap-2">
+                    <TargetIcon />
+                    Target subdomain
+                  </Label>
                   <Input
                     value={bulkSubdomainChangeParams.to}
                     onChange={(e) =>
@@ -230,9 +292,38 @@ export default function SuperActionsMenu() {
                     }
                   />
                 </div>
+                <div className="gap-2 grid">
+                  <span className="p-1 border rounded-lg text-destructive text-center cursor-default">
+                    {`<hostname>.${
+                      bulkSubdomainChangeParams.from.length > 0
+                        ? bulkSubdomainChangeParams.from
+                        : "<not set>"
+                    }.${information.cloudflare.selectedZone?.name}`}{" "}
+                  </span>
+                  <div className="flex justify-center items-center">
+                    <ChevronDownIcon />
+                  </div>
+                  <span className="p-1 border rounded-lg text-affirmative text-center cursor-default">
+                    {`<hostname>.${
+                      bulkSubdomainChangeParams.to.length > 0
+                        ? bulkSubdomainChangeParams.to
+                        : "<not set>"
+                    }.${information.cloudflare.selectedZone?.name}`}
+                  </span>
+                </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleSubdomainBulkChange}>Execute</Button>
+                <DialogClose asChild>
+                  <Button variant={"destructive"}>Cancel</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    variant={"affirmative"}
+                    onClick={handleSubdomainBulkChange}
+                  >
+                    Execute
+                  </Button>
+                </DialogClose>
               </DialogFooter>
             </DialogContent>
           </Dialog>

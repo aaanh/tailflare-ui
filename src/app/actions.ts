@@ -3,6 +3,8 @@
 import { Information, TailflareState } from "@/lib/schema-type";
 import { getCloudflareClient } from "@/lib/cloudflare-client";
 import {
+  BatchPatchParam,
+  BatchPutParam,
   RecordBatchParams,
   RecordCreateParams,
   RecordDeleteParams,
@@ -106,13 +108,31 @@ export async function deleteMultipleRecordsInCloudflareZone(
   if (information.cloudflare.selectedZone?.id) {
     const response = await cloudflareClient.dns.records.batch({
       deletes: recordDeleteParams,
-      zone_id: information.cloudflare.selectedZone.id
-    })
+      zone_id: information.cloudflare.selectedZone.id,
+    });
 
-    return response
+    return response;
   } else {
     throw new Error(
       "Unable to perform batch action: Add all hosts to Cloudflare."
     );
   }
+}
+
+export async function UpdateMultipleRecordsInCloudflareZone(
+  batchPatchParams: BatchPatchParam.CNAMERecord[],
+  tailflareState: TailflareState,
+  information: Information
+) {
+  if (!information.cloudflare.selectedZone?.id) {
+    throw new Error(
+      "Unable to perform batch action: Select a Cloudflare zone first."
+    );
+  }
+
+  const client = getCloudflareClient(tailflareState);
+  const response = await client.dns.records.batch({
+    patches: batchPatchParams,
+    zone_id: information.cloudflare.selectedZone.id,
+  });
 }

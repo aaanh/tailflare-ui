@@ -41,7 +41,10 @@ export function SubdomainDialog() {
   return (
     <div>
       {editing ? (
-        <form onSubmit={handleSubmit} className="flex items-center gap-4 border p-2 rounded-lg">
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center gap-4 p-2 border rounded-lg"
+        >
           <div className="flex items-center gap-2">
             <span>{`<hostname>`}.</span>
             <Input
@@ -69,13 +72,13 @@ export function SubdomainDialog() {
           <span>
             {information.cloudflare.selectedZone
               ? `Target subdomain: ${[
-                "<hostname>",
-                information.cloudflare.subdomain,
-                information.cloudflare.selectedZone.name,
-              ]
-                .filter((str) => str.length > 0)
-                .join(".")}`
-              : "Choose Cloudflare zone and enter subdomain"}
+                  "<hostname>",
+                  information.cloudflare.subdomain,
+                  information.cloudflare.selectedZone.name,
+                ]
+                  .filter((str) => str.length > 0)
+                  .join(".")}`
+              : "Choose zone then enter subdomain"}
           </span>
           <Pencil
             className="opacity-0 group-hover:opacity-100 w-4 h-4 transition-opacity"

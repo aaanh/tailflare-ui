@@ -7,18 +7,40 @@ import {
 } from "./ui/dropdown-menu";
 import { BoxesIcon, FolderPlusIcon, Trash2Icon, ZapIcon } from "lucide-react";
 import { cn, getDeepestSubdomain, handleForceRefresh } from "@/lib/utils";
-import { buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import {
   createMultipleRecordsInCloudflareZone,
   deleteMultipleRecordsInCloudflareZone,
 } from "@/app/actions";
-import { RecordCreateParams } from "cloudflare/resources/dns/records.mjs";
+import {
+  BatchPatchParam,
+  RecordCreateParams,
+} from "cloudflare/resources/dns/records.mjs";
 import { useToast } from "@/hooks/use-toast";
 import { getMatchedHosts } from "@/lib/utils";
+import { SubdomainSchema } from "@/lib/schema-type";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { DialogDescription, DialogTrigger } from "@radix-ui/react-dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 export default function SuperActionsMenu() {
   const { information, tailflareState, setInformation } = useTailflare();
   const { toast } = useToast();
+  const [bulkSubdomainChangeParams, setSubdomainChangeParams] = useState<{
+    from: string;
+    to: string;
+  }>({
+    from: "",
+    to: "",
+  });
 
   async function handleAddAllHosts() {
     if (!information.cloudflare.selectedZone) {
@@ -127,11 +149,30 @@ export default function SuperActionsMenu() {
   }
 
   /**
+   * This handler is called when the bulk change button is clicked. It preps the input parameters and call the server-side action that handles updating multiple records. There is no mutations nor extern API calls to Tailscale, only on Cloudflare.
    *
    * @param from The subdomain to modify. Use '*' to target all matched hosts regardless of subdomain. Leave empty to target hosts under the domain, i.e. hostname.domain.tld
-   * @param to
+   * @param to Specify subdomain(s) only. E.g. engineering.workstations OR build.servers -> hostname.{engineering OR build}.{workstations OR servers}
    */
-  async function handleSubdomainBulkChange(from: string, to: string) {}
+  async function handleSubdomainBulkChange() {
+    const { from, to } = bulkSubdomainChangeParams;
+
+    const sourceSubdomain = SubdomainSchema.safeParse(from);
+    const matchedHosts: BatchPatchParam.CNAMERecord[] =
+      information.cloudflare.dnsRecords
+        .filter((record) =>
+          information.tailscale.hosts.some(
+            (host) =>
+              host &&
+              getDeepestSubdomain(host) ===
+                getDeepestSubdomain(record.name ?? "")
+          )
+        )
+        .filter((record) =>
+          record?.name?.includes(from)
+        ) as BatchPatchParam.CNAMERecord[];
+    console.log(matchedHosts);
+  }
 
   return (
     <DropdownMenu>
@@ -153,8 +194,48 @@ export default function SuperActionsMenu() {
           <FolderPlusIcon />
           Add all hosts
         </DropdownMenuItem>
-        <DropdownMenuItem disabled>
-          <BoxesIcon /> Change all added subdomains
+        <DropdownMenuItem asChild>
+          <Dialog>
+            <DialogTrigger asChild>
+              <span className="flex items-center gap-2 hover:bg-foreground/20 p-2 rounded-lg text-sm cursor-pointer">
+                <BoxesIcon size={24} /> Change all added subdomains
+              </span>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Changing all added subdomains</DialogTitle>
+              </DialogHeader>
+              <div>
+                <div>
+                  <Label>Source subdomain</Label>
+                  <Input
+                    value={bulkSubdomainChangeParams.from}
+                    onChange={(e) =>
+                      setSubdomainChangeParams((prev) => ({
+                        ...prev,
+                        from: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Target subdomain</Label>
+                  <Input
+                    value={bulkSubdomainChangeParams.to}
+                    onChange={(e) =>
+                      setSubdomainChangeParams((prev) => ({
+                        ...prev,
+                        to: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleSubdomainBulkChange}>Execute</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-red-500 cursor-pointer"

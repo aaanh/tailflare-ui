@@ -11,6 +11,19 @@ export const TailflareStateSchema = z.object({
 
 export type TailflareState = z.infer<typeof TailflareStateSchema>;
 
+export const SubdomainSchema = z
+  .string()
+  .refine(
+    (val) => val.split(".").length <= 1 && val[-1] !== "." && val[0] !== ".",
+    {
+      message:
+        "Enter a valid subdomain. Currently only support up to 5th level FQDN. E.g. anguyen-workstation.engineering.laptops.aaanh.com",
+    }
+  )
+  .default("");
+
+export type Subdomain = z.infer<typeof SubdomainSchema>;
+
 export const InformationSchema = z.object({
   tailscale: z.object({
     hosts: z.array(z.string()),
@@ -35,17 +48,7 @@ export const InformationSchema = z.object({
         proxiable: z.boolean(),
       })
     ),
-    subdomain: z
-      .string()
-      .refine(
-        (val) =>
-          val.split(".").length <= 1 && val[-1] !== "." && val[0] !== ".",
-        {
-          message:
-            "Enter a valid subdomain. Currently only support up to 5th level FQDN. E.g. anguyen-workstation.engineering.laptops.aaanh.com",
-        }
-      )
-      .default(""),
+    subdomain: SubdomainSchema,
   }),
 });
 

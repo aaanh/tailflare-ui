@@ -1,44 +1,44 @@
-import { Information } from "./schema-type";
+import { AppData } from "./schema-type";
 
 const CACHE_KEY = "tailflare_cache";
 const CACHE_EXPIRY = 1000 * 60 * 60; // 1 hour
 
 type CacheData = {
   timestamp: number;
-  information: Information;
+  appData: AppData;
   selectedZoneCache?: {
     zone: {
       id: string;
       name: string;
     };
-    records: Information["cloudflare"]["dnsRecords"];
+    records: AppData["cloudflare"]["dnsRecords"];
   };
 };
 
-export function saveToCache(information: Information) {
+export function saveToCache(appData: AppData) {
   const existingCache = localStorage.getItem(CACHE_KEY);
   const currentCache: CacheData = existingCache
     ? JSON.parse(existingCache)
-    : { timestamp: Date.now(), information };
+    : { timestamp: Date.now(), appData };
 
   // If there's a selected zone, cache it with its records
-  if (information.cloudflare.selectedZone) {
+  if (appData.cloudflare.selectedZone) {
     currentCache.selectedZoneCache = {
       zone: {
-        id: information.cloudflare.selectedZone.id,
-        name: information.cloudflare.selectedZone.name,
+        id: appData.cloudflare.selectedZone.id,
+        name: appData.cloudflare.selectedZone.name,
       },
-      records: information.cloudflare.dnsRecords,
+      records: appData.cloudflare.dnsRecords,
     };
   }
 
   currentCache.timestamp = Date.now();
-  currentCache.information = information;
+  currentCache.appData = appData;
 
   localStorage.setItem(CACHE_KEY, JSON.stringify(currentCache));
 }
 
-export function loadFromCache(): Information | null {
+export function loadFromCache(): AppData | null {
   const cached = localStorage.getItem(CACHE_KEY);
   if (!cached) return null;
 
@@ -50,9 +50,11 @@ export function loadFromCache(): Information | null {
 
   // Restore selected zone and its records if they exist
   if (cacheData.selectedZoneCache) {
-    cacheData.information.cloudflare.selectedZone = cacheData.selectedZoneCache.zone;
-    cacheData.information.cloudflare.dnsRecords = cacheData.selectedZoneCache.records;
+    cacheData.appData.cloudflare.selectedZone =
+      cacheData.selectedZoneCache.zone;
+    cacheData.appData.cloudflare.dnsRecords =
+      cacheData.selectedZoneCache.records;
   }
 
-  return cacheData.information;
+  return cacheData.appData;
 }

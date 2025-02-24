@@ -31,7 +31,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { record } from "zod";
 
 export default function TailscaleSide() {
-  const { tailflareState, information, setInformation } = useTailflare();
+  const { credentials, appData, setAppData } = useTailflare();
   const [isLoading, setIsLoading] = useState(false);
 
   // Create a debounced version of the fetch function
@@ -39,11 +39,11 @@ export default function TailscaleSide() {
     debounce(async () => {
       setIsLoading(true);
       try {
-        const res = await getTailscaleHosts(tailflareState);
+        const res = await getTailscaleHosts(credentials);
         const hosts = res.devices.map(
           (device: { name: string }) => device.name
         ) as string[];
-        setInformation((prev) => {
+        setAppData((prev) => {
           const newInfo = {
             ...prev,
             tailscale: {
@@ -65,34 +65,34 @@ export default function TailscaleSide() {
         setIsLoading(false);
       }
     }, 500),
-    [tailflareState, setInformation, setIsLoading, toast]
+    [credentials, setAppData, setIsLoading, toast]
   );
 
   // Load cached data on mount
   useEffect(() => {
     const cached = loadFromCache();
     if (cached) {
-      setInformation(cached);
+      setAppData(cached);
     }
   }, []);
 
   useEffect(() => {
-    if (tailflareState.tailscaleApiKey && tailflareState.tailnetOrganization) {
+    if (credentials.tailscaleApiKey && credentials.tailnetOrganization) {
       debouncedFetch();
     }
 
     return () => {
       debouncedFetch.cancel();
     };
-  }, [tailflareState, debouncedFetch]);
+  }, [credentials, debouncedFetch]);
 
   async function handleRefresh() {
     setIsLoading(true);
     try {
       const result = await handleForceRefresh(
-        tailflareState,
-        information,
-        setInformation,
+        credentials,
+        appData,
+        setAppData,
         { fetchZones: false, fetchRecords: false }
       );
       if (result.success) {
@@ -117,7 +117,7 @@ export default function TailscaleSide() {
       title: "Adding host to Cloudflare",
     });
 
-    if (!information.cloudflare.selectedZone) {
+    if (!appData.cloudflare.selectedZone) {
       toast({
         variant: "destructive",
         title: "Please select a Cloudflare zone first.",
@@ -127,12 +127,12 @@ export default function TailscaleSide() {
 
     const hostname = fqdn.split(".")[0];
     try {
-      const res = await createCloudflareRecordInZone(tailflareState, {
-        name: `${hostname}${information.cloudflare.subdomain &&
-          "." + information.cloudflare.subdomain
-          }`,
+      const res = await createCloudflareRecordInZone(credentials, {
+        name: `${hostname}${
+          appData.cloudflare.subdomain && "." + appData.cloudflare.subdomain
+        }`,
         content: fqdn,
-        zone_id: information.cloudflare.selectedZone?.id ?? "",
+        zone_id: appData.cloudflare.selectedZone?.id ?? "",
         type: "CNAME",
       });
       toast({
@@ -144,13 +144,13 @@ export default function TailscaleSide() {
       await handleRefresh();
 
       // Also refresh Cloudflare records
-      if (information.cloudflare.selectedZone) {
+      if (appData.cloudflare.selectedZone) {
         const records = await getCloudflareRecordsInZone(
-          tailflareState,
-          information.cloudflare.selectedZone.id
+          credentials,
+          appData.cloudflare.selectedZone.id
         );
 
-        setInformation((prev) => {
+        setAppData((prev) => {
           const newInfo = {
             ...prev,
             cloudflare: {
@@ -187,7 +187,7 @@ export default function TailscaleSide() {
     <SideContainer>
       <div className="flex flex-col gap-2 mx-auto w-fit">
         <div className="relative">
-          <h2 className="font-bold text-background text-2xl text-center text-foreground">
+          <h2 className="font-bold text-background text-foreground text-2xl text-center">
             Tailscale
           </h2>
         </div>
@@ -195,7 +195,7 @@ export default function TailscaleSide() {
           <Input
             disabled
             value={
-              tailflareState.tailnetOrganization ??
+              credentials.tailnetOrganization ??
               "Please add Tailnet Organization"
             }
             className="bg-background p-2 border rounded-md text-primary"
@@ -224,8 +224,8 @@ export default function TailscaleSide() {
             </TableHeader>
             <TableBody>
               {getMatchedHosts(
-                information.tailscale.hosts,
-                information.cloudflare.dnsRecords
+                appData.tailscale.hosts,
+                appData.cloudflare.dnsRecords
               ).map((host) => (
                 <HostItem
                   key={host}
@@ -254,8 +254,8 @@ export default function TailscaleSide() {
             </TableHeader>
             <TableBody>
               {getUnmatchedHosts(
-                information.tailscale.hosts,
-                information.cloudflare.dnsRecords
+                appData.tailscale.hosts,
+                appData.cloudflare.dnsRecords
               ).map((host) => (
                 <HostItem
                   key={host}

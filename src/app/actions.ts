@@ -1,6 +1,6 @@
 "use server";
 
-import { Information, TailflareState } from "@/lib/schema-type";
+import { AppData, Credentials } from "@/lib/schema-type";
 import { getCloudflareClient } from "@/lib/cloudflare-client";
 import {
   BatchPatchParam,
@@ -13,23 +13,23 @@ import {
 } from "cloudflare/resources/dns/records.mjs";
 import { getTailscaleClient } from "@/lib/tailscale-client";
 
-export async function getCloudflareZones(tailflareState: TailflareState) {
-  const cloudflareClient = getCloudflareClient(tailflareState);
+export async function getCloudflareZones(credentials: Credentials) {
+  const cloudflareClient = getCloudflareClient(credentials);
   const zones = await cloudflareClient.zones.list();
   return zones.result;
 }
 
 /**
  *
- * @param tailflareState
+ * @param credentials
  * @param zone_id
  * @returns {Promnise<RecordResponse[]>} records
  */
 export async function getCloudflareRecordsInZone(
-  tailflareState: TailflareState,
+  credentials: Credentials,
   zone_id: string
 ): Promise<RecordResponse[]> {
-  const cloudflareClient = getCloudflareClient(tailflareState);
+  const cloudflareClient = getCloudflareClient(credentials);
   const response = await cloudflareClient.dns.records.list({ zone_id });
 
   return response.result.filter((rec) => rec.type === "CNAME");
@@ -38,15 +38,15 @@ export async function getCloudflareRecordsInZone(
 /**
  * Currently only support CNAME records.
  *
- * @param tailflareState
+ * @param credentials
  * @param recordCreateParams
  * @returns {Promise<RecordResponse>} res
  */
 export async function createCloudflareRecordInZone(
-  tailflareState: TailflareState,
+  credentials: Credentials,
   recordCreateParams: RecordCreateParams.CNAMERecord
 ): Promise<RecordResponse> {
-  const cloudflareClient = getCloudflareClient(tailflareState);
+  const cloudflareClient = getCloudflareClient(credentials);
 
   const response = await cloudflareClient.dns.records.create(
     recordCreateParams
@@ -55,8 +55,8 @@ export async function createCloudflareRecordInZone(
   return response;
 }
 
-export async function getTailscaleHosts(tailflareState: TailflareState) {
-  const client = getTailscaleClient(tailflareState);
+export async function getTailscaleHosts(credentials: Credentials) {
+  const client = getTailscaleClient(credentials);
 
   const response = await client.devices.list();
 
@@ -64,11 +64,11 @@ export async function getTailscaleHosts(tailflareState: TailflareState) {
 }
 
 export async function deleteRecordByIdFromCloudflare(
-  tailflareState: TailflareState,
+  credentials: Credentials,
   dnsRecordId: string,
   recordDeleteParams: RecordDeleteParams
 ): Promise<RecordDeleteResponse> {
-  const cloudflareClient = getCloudflareClient(tailflareState);
+  const cloudflareClient = getCloudflareClient(credentials);
   const response = await cloudflareClient.dns.records.delete(
     dnsRecordId,
     recordDeleteParams
@@ -79,15 +79,15 @@ export async function deleteRecordByIdFromCloudflare(
 
 export async function createMultipleRecordsInCloudflareZone(
   recordCreateParams: RecordCreateParams.CNAMERecord[],
-  tailflareState: TailflareState,
-  information: Information
+  credentials: Credentials,
+  appData: AppData
 ) {
-  const cloudflareClient = getCloudflareClient(tailflareState);
+  const cloudflareClient = getCloudflareClient(credentials);
 
-  if (information.cloudflare.selectedZone?.id) {
+  if (appData.cloudflare.selectedZone?.id) {
     const response = await cloudflareClient.dns.records.batch({
       posts: recordCreateParams,
-      zone_id: information.cloudflare.selectedZone.id,
+      zone_id: appData.cloudflare.selectedZone.id,
     });
 
     return response;
@@ -100,15 +100,15 @@ export async function createMultipleRecordsInCloudflareZone(
 
 export async function deleteMultipleRecordsInCloudflareZone(
   recordDeleteParams: RecordBatchParams.Delete[],
-  tailflareState: TailflareState,
-  information: Information
+  credentials: Credentials,
+  appData: AppData
 ) {
-  const cloudflareClient = getCloudflareClient(tailflareState);
+  const cloudflareClient = getCloudflareClient(credentials);
 
-  if (information.cloudflare.selectedZone?.id) {
+  if (appData.cloudflare.selectedZone?.id) {
     const response = await cloudflareClient.dns.records.batch({
       deletes: recordDeleteParams,
-      zone_id: information.cloudflare.selectedZone.id,
+      zone_id: appData.cloudflare.selectedZone.id,
     });
 
     return response;
@@ -121,18 +121,18 @@ export async function deleteMultipleRecordsInCloudflareZone(
 
 export async function UpdateMultipleRecordsInCloudflareZone(
   batchPatchParams: BatchPatchParam.CNAMERecord[],
-  tailflareState: TailflareState,
-  information: Information
+  credentials: Credentials,
+  appData: AppData
 ) {
-  if (!information.cloudflare.selectedZone?.id) {
+  if (!appData.cloudflare.selectedZone?.id) {
     throw new Error(
       "Unable to perform batch action: Select a Cloudflare zone first."
     );
   }
 
-  const client = getCloudflareClient(tailflareState);
+  const client = getCloudflareClient(credentials);
   const response = await client.dns.records.batch({
     patches: batchPatchParams,
-    zone_id: information.cloudflare.selectedZone.id,
+    zone_id: appData.cloudflare.selectedZone.id,
   });
 }

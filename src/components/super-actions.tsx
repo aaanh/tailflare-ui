@@ -47,7 +47,7 @@ import { Label } from "./ui/label";
 import usageText from "@/lib/usage-text";
 
 export default function SuperActionsMenu() {
-  const { information, tailflareState, setInformation } = useTailflare();
+  const { appData, credentials, setAppData } = useTailflare();
   const { toast } = useToast();
   const [bulkSubdomainChangeParams, setSubdomainChangeParams] = useState<{
     from: string;
@@ -58,13 +58,13 @@ export default function SuperActionsMenu() {
   });
 
   async function handleAddAllHosts() {
-    if (!information.cloudflare.selectedZone) {
+    if (!appData.cloudflare.selectedZone) {
       toast({
         title: "Missing target Cloudflare Zone",
         description: "Please select an available zone from the dropdown menu.",
       });
 
-      await handleForceRefresh(tailflareState, information, setInformation, {
+      await handleForceRefresh(credentials, appData, setAppData, {
         fetchZones: false,
         fetchRecords: true,
         fetchHosts: false,
@@ -73,12 +73,11 @@ export default function SuperActionsMenu() {
       return;
     }
 
-    const selectedZoneId = information.cloudflare.selectedZone.id;
+    const selectedZoneId = appData.cloudflare.selectedZone.id;
     const records: RecordCreateParams.CNAMERecord[] =
-      information.tailscale.hosts.map((host) => ({
+      appData.tailscale.hosts.map((host) => ({
         name: `${host.split(".")[0]}${
-          information.cloudflare.subdomain &&
-          "." + information.cloudflare.subdomain
+          appData.cloudflare.subdomain && "." + appData.cloudflare.subdomain
         }`,
         zone_id: selectedZoneId,
         type: "CNAME",
@@ -87,8 +86,8 @@ export default function SuperActionsMenu() {
 
     const res = await createMultipleRecordsInCloudflareZone(
       records,
-      tailflareState,
-      information
+      credentials,
+      appData
     );
 
     toast({
@@ -96,7 +95,7 @@ export default function SuperActionsMenu() {
       description: JSON.stringify(res),
     });
 
-    await handleForceRefresh(tailflareState, information, setInformation, {
+    await handleForceRefresh(credentials, appData, setAppData, {
       fetchZones: false,
       fetchRecords: true,
       fetchHosts: false,
@@ -105,8 +104,8 @@ export default function SuperActionsMenu() {
 
   async function handleRemoveAllHosts() {
     const matchedHosts = getMatchedHosts(
-      information.tailscale.hosts,
-      information.cloudflare.dnsRecords
+      appData.tailscale.hosts,
+      appData.cloudflare.dnsRecords
     );
 
     if (matchedHosts.length === 0) {
@@ -118,7 +117,7 @@ export default function SuperActionsMenu() {
     }
 
     try {
-      const recordsToDelete = information.cloudflare.dnsRecords
+      const recordsToDelete = appData.cloudflare.dnsRecords
         .filter((record) =>
           matchedHosts.some(
             (host) =>
@@ -133,8 +132,8 @@ export default function SuperActionsMenu() {
 
       await deleteMultipleRecordsInCloudflareZone(
         recordsToDelete,
-        tailflareState,
-        information
+        credentials,
+        appData
       );
 
       toast({
@@ -142,7 +141,7 @@ export default function SuperActionsMenu() {
         description: `Removed ${matchedHosts.length} DNS records from Cloudflare`,
       });
 
-      await handleForceRefresh(tailflareState, information, setInformation, {
+      await handleForceRefresh(credentials, appData, setAppData, {
         fetchZones: false,
         fetchRecords: true,
         fetchHosts: false,
@@ -155,7 +154,7 @@ export default function SuperActionsMenu() {
         variant: "destructive",
       });
 
-      await handleForceRefresh(tailflareState, information, setInformation, {
+      await handleForceRefresh(credentials, appData, setAppData, {
         fetchZones: false,
         fetchRecords: true,
         fetchHosts: false,
@@ -173,8 +172,8 @@ export default function SuperActionsMenu() {
     const { from, to } = bulkSubdomainChangeParams;
 
     const matchedHosts: BatchPatchParam.CNAMERecord[] =
-      information.cloudflare.dnsRecords.filter((record) =>
-        information.tailscale.hosts.some(
+      appData.cloudflare.dnsRecords.filter((record) =>
+        appData.tailscale.hosts.some(
           (host) =>
             host &&
             getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
@@ -219,8 +218,8 @@ export default function SuperActionsMenu() {
 
     const res = await UpdateMultipleRecordsInCloudflareZone(
       prepped,
-      tailflareState,
-      information
+      credentials,
+      appData
     );
 
     toast({
@@ -228,7 +227,7 @@ export default function SuperActionsMenu() {
       description: JSON.stringify(res),
     });
 
-    await handleForceRefresh(tailflareState, information, setInformation, {
+    await handleForceRefresh(credentials, appData, setAppData, {
       fetchZones: false,
       fetchRecords: true,
       fetchHosts: true,
@@ -306,7 +305,7 @@ export default function SuperActionsMenu() {
                       bulkSubdomainChangeParams.from.length > 0
                         ? bulkSubdomainChangeParams.from
                         : "<not set>"
-                    }.${information.cloudflare.selectedZone?.name}`}{" "}
+                    }.${appData.cloudflare.selectedZone?.name}`}{" "}
                   </span>
                   <div className="flex justify-center items-center">
                     <ChevronDownIcon />
@@ -316,7 +315,7 @@ export default function SuperActionsMenu() {
                       bulkSubdomainChangeParams.to.length > 0
                         ? bulkSubdomainChangeParams.to
                         : "<not set>"
-                    }.${information.cloudflare.selectedZone?.name}`}
+                    }.${appData.cloudflare.selectedZone?.name}`}
                   </span>
                 </div>
               </div>

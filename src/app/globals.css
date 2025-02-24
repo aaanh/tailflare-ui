@@ -73,4 +73,8 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  a {
+    @apply text-blue-500 underline underline-offset-2;
+  }
 }

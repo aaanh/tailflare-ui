@@ -1,15 +1,14 @@
-import { ProxyEndpoints } from "cloudflare/resources/zero-trust/gateway/proxy-endpoints.mjs";
 import { z } from "zod";
 import { RecordResponse } from "cloudflare/resources/dns/records.mjs";
 
-export const TailflareStateSchema = z.object({
+export const CredentialsSchema = z.object({
   cloudflareApiKey: z.string(),
   cloudflareApiEmail: z.string(),
   tailscaleApiKey: z.string(),
   tailnetOrganization: z.string(),
 });
 
-export type TailflareState = z.infer<typeof TailflareStateSchema>;
+export type Credentials = z.infer<typeof CredentialsSchema>;
 
 export const SubdomainSchema = z
   .string()
@@ -24,7 +23,7 @@ export const SubdomainSchema = z
 
 export type Subdomain = z.infer<typeof SubdomainSchema>;
 
-export const InformationSchema = z.object({
+export const AppDataSchema = z.object({
   tailscale: z.object({
     hosts: z.array(z.string()),
   }),
@@ -52,7 +51,7 @@ export const InformationSchema = z.object({
   }),
 });
 
-export type Information = {
+export type AppData = {
   tailscale: {
     hosts: string[];
   };
@@ -64,7 +63,7 @@ export type Information = {
   };
 };
 
-export const fieldMap: Record<string, keyof TailflareState> = {
+export const fieldMap: Record<string, keyof Credentials> = {
   "tailscale-api-key": "tailscaleApiKey",
   "tailnet-organization": "tailnetOrganization",
   "cloudflare-api-key": "cloudflareApiKey",

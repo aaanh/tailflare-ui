@@ -1,4 +1,4 @@
-import { TailflareState } from "./schema-type";
+import { Credentials } from "./schema-type";
 
 const clientCache = new Map<string, Tailscale>();
 
@@ -35,15 +35,15 @@ export class Tailscale {
   };
 }
 
-export function getTailscaleClient(tailflareState: TailflareState): Tailscale {
-  const cacheKey = `${tailflareState.tailnetOrganization}:${tailflareState.tailscaleApiKey}`;
+export function getTailscaleClient(credentials: Credentials): Tailscale {
+  const cacheKey = `${credentials.tailnetOrganization}:${credentials.tailscaleApiKey}`;
 
   if (!clientCache.has(cacheKey)) {
     clientCache.set(
       cacheKey,
       new Tailscale({
-        tailnet: tailflareState.tailnetOrganization,
-        apiKey: tailflareState.tailscaleApiKey,
+        tailnet: credentials.tailnetOrganization,
+        apiKey: credentials.tailscaleApiKey,
       })
     );
   }

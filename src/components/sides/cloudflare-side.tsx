@@ -13,7 +13,7 @@ import {
   getCloudflareZones,
 } from "@/app/actions";
 import { debounce } from "lodash";
-import { Information } from "@/lib/schema-type";
+import { AppData } from "@/lib/schema-type";
 import SideContainer from "./side-container";
 import { toast } from "@/hooks/use-toast";
 import HostItem from "./host-item";
@@ -34,20 +34,20 @@ import { SelectSeparator } from "@radix-ui/react-select";
 import { handleForceRefresh } from "@/lib/utils";
 
 export default function CloudflareSide() {
-  const { information, setInformation, tailflareState } = useTailflare();
+  const { appData, setAppData, credentials } = useTailflare();
   const [isLoading, setIsLoading] = useState(false);
 
   const debouncedFetch = useCallback(
     debounce(async () => {
       setIsLoading(true);
       try {
-        const response = await getCloudflareZones(tailflareState);
+        const response = await getCloudflareZones(credentials);
         const zones = response.map((zone) => ({
           id: zone.id,
           name: zone.name,
         }));
 
-        setInformation((prev: Information) => {
+        setAppData((prev: AppData) => {
           const newInfo = {
             ...prev,
             cloudflare: {
@@ -62,12 +62,12 @@ export default function CloudflareSide() {
         setIsLoading(false);
       }
     }, 500),
-    [tailflareState, setInformation, setIsLoading]
+    [credentials, setAppData, setIsLoading]
   );
 
   async function handleSelectZone(id: string | undefined) {
     if (!id) {
-      setInformation((prev: Information) => {
+      setAppData((prev: AppData) => {
         const newInfo = {
           ...prev,
           cloudflare: {
@@ -86,8 +86,8 @@ export default function CloudflareSide() {
       return;
     }
 
-    const records = await getCloudflareRecordsInZone(tailflareState, id);
-    const selectedZone = information.cloudflare.zones.find(
+    const records = await getCloudflareRecordsInZone(credentials, id);
+    const selectedZone = appData.cloudflare.zones.find(
       (zone) => zone.id === id
     );
 
@@ -100,7 +100,7 @@ export default function CloudflareSide() {
       return;
     }
 
-    setInformation((prev: Information) => {
+    setAppData((prev: AppData) => {
       const newInfo = {
         ...prev,
         cloudflare: {
@@ -124,9 +124,9 @@ export default function CloudflareSide() {
     setIsLoading(true);
     try {
       const result = await handleForceRefresh(
-        tailflareState,
-        information,
-        setInformation,
+        credentials,
+        appData,
+        setAppData,
         { fetchHosts: false }
       );
       if (result.success) {
@@ -150,13 +150,13 @@ export default function CloudflareSide() {
   useEffect(() => {
     const cached = loadFromCache();
     if (cached) {
-      setInformation(cached);
+      setAppData(cached);
     }
-  }, [setInformation]);
+  }, [setAppData]);
 
   // Set up effect to fetch data when cloudflare state changes
   useEffect(() => {
-    if (tailflareState.cloudflareApiKey && tailflareState.cloudflareApiEmail) {
+    if (credentials.cloudflareApiKey && credentials.cloudflareApiEmail) {
       debouncedFetch();
     }
 
@@ -164,15 +164,15 @@ export default function CloudflareSide() {
     return () => {
       debouncedFetch.cancel();
     };
-  }, [tailflareState, debouncedFetch]);
+  }, [credentials, debouncedFetch]);
 
   async function handleDeleteDnsRecord(record: RecordResponse) {
     toast({
       title: "Deleting record from Cloudflare",
     });
     try {
-      await deleteRecordByIdFromCloudflare(tailflareState, record.id, {
-        zone_id: information.cloudflare.selectedZone?.id ?? "",
+      await deleteRecordByIdFromCloudflare(credentials, record.id, {
+        zone_id: appData.cloudflare.selectedZone?.id ?? "",
       });
       toast({
         title: `Deleted ${record.name} from Cloudflare`,
@@ -188,31 +188,32 @@ export default function CloudflareSide() {
   return (
     <SideContainer>
       <div className="relative mx-auto w-fit">
-        <h2 className="font-bold text-2xl text-orange-500">Cloudflare</h2>
+        <h2 className="font-bold text-orange-500 text-2xl">Cloudflare</h2>
       </div>
 
       <div className="items-center gap-2">
         <div className="flex items-center gap-2 overflow-hidden text-ellipsis">
           <Select
             onValueChange={handleSelectZone}
-            value={information.cloudflare.selectedZone?.id}
-            disabled={information.cloudflare.zones.length === 0}
+            value={appData.cloudflare.selectedZone?.id}
+            disabled={appData.cloudflare.zones.length === 0}
           >
             <SelectTrigger className="bg-background">
               <SelectValue
                 className=""
                 placeholder={
-                  information.cloudflare.zones.length === 0
+                  appData.cloudflare.zones.length === 0
                     ? "No zones available"
                     : "Select zone"
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              {information.cloudflare.zones.map((zone, idx) => (
+              {appData.cloudflare.zones.map((zone, idx) => (
                 <SelectItem value={zone.id} key={zone.id}>
-                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${zone.id
-                    }`}</span>
+                  <span className="break-all">{`${idx + 1}. ${zone.name} - ${
+                    zone.id
+                  }`}</span>
                 </SelectItem>
               ))}
               <SelectSeparator />
@@ -253,11 +254,11 @@ export default function CloudflareSide() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {information.cloudflare.dnsRecords
+              {appData.cloudflare.dnsRecords
                 .filter(
                   (record) =>
                     record &&
-                    information.tailscale.hosts.some(
+                    appData.tailscale.hosts.some(
                       (host) =>
                         getDeepestSubdomain(host) ===
                         getDeepestSubdomain(record.name ?? "")
@@ -300,11 +301,11 @@ export default function CloudflareSide() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {information.cloudflare.dnsRecords
+              {appData.cloudflare.dnsRecords
                 .filter(
                   (record) =>
                     record &&
-                    !information.tailscale.hosts.some(
+                    !appData.tailscale.hosts.some(
                       (host) =>
                         getDeepestSubdomain(host) ===
                         getDeepestSubdomain(record.name ?? "")

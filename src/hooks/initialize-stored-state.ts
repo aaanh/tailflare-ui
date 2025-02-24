@@ -1,13 +1,13 @@
-import { TailflareState } from "@/lib/schema-type";
+import { Credentials } from "@/lib/schema-type";
 import { decryptData } from "@/lib/utils";
 
 export async function initializeStoredState(
   hashKey: string | null,
-  setTailflareState: (state: TailflareState) => void
+  setCredentials: (state: Credentials) => void
 ) {
   if (!hashKey) return;
 
-  const storedState = localStorage.getItem("tailflareState");
+  const storedState = localStorage.getItem("credentials");
   if (!storedState) return;
 
   try {
@@ -20,7 +20,7 @@ export async function initializeStoredState(
       ? await decryptData(parsedState.tailscaleApiKey, hashKey)
       : "";
 
-    setTailflareState({
+    setCredentials({
       cloudflareApiEmail: parsedState.cloudflareApiEmail || "",
       cloudflareApiKey: decryptedCloudflareApiKey || "",
       tailnetOrganization: parsedState.tailnetOrganization || "",

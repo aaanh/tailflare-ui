@@ -2,7 +2,7 @@
 
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { fieldMap, TailflareState } from "@/lib/schema-type";
+import { fieldMap, Credentials } from "@/lib/schema-type";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -20,52 +20,76 @@ import { encryptData } from "@/lib/utils";
 import { useTailflare } from "@/contexts/tailflare-context";
 import { initializeStoredState } from "@/hooks/initialize-stored-state";
 import { useToast } from "@/hooks/use-toast";
+import {
+  TooltipContent,
+  TooltipTrigger,
+  Tooltip,
+  TooltipProvider,
+} from "./ui/tooltip";
+import usageText from "@/lib/usage-text";
 
 interface KeyEntryFormProps {
-  tailflareState: TailflareState;
-  setTailflareState: (newState: TailflareState) => void;
+  credentials: Credentials;
+  setCredentials: (newState: Credentials) => void;
   showSecrets: boolean;
 }
 
-
-
 function KeyEntryForm({
-  tailflareState,
-  setTailflareState,
+  credentials,
+  setCredentials,
   showSecrets,
 }: KeyEntryFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     const stateKey = fieldMap[id];
     if (stateKey) {
-      setTailflareState({
-        ...tailflareState,
+      setCredentials({
+        ...credentials,
         [stateKey]: value,
       });
     }
   };
 
   return (
-    <>
+    <TooltipProvider>
       <form className="gap-4 grid grid-cols-2">
         {/* Tailscale column */}
         <div className="grid">
           <div className="items-center gap-1 grid">
-            <Label className="text-lg" htmlFor="tailnet-organization">
-              Tailnet Organization
-            </Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Label className="text-lg" htmlFor="tailnet-organization">
+                    Tailnet Organization
+                  </Label>
+                  <TooltipContent>
+                    {usageText.credentials.tailnetOrg}
+                  </TooltipContent>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
+
             <Input
-              value={tailflareState.tailnetOrganization}
+              value={credentials.tailnetOrganization}
               id="tailnet-organization"
               onChange={handleChange}
             />
           </div>
           <div className="items-center gap-1 grid">
-            <Label className="text-lg" htmlFor="tailscale-api-key">
-              Tailscale API key
-            </Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Label className="text-lg" htmlFor="tailnet-organization">
+                    Tailscale API Key
+                  </Label>
+                  <TooltipContent>
+                    {usageText.credentials.tailscaleApiKey}
+                  </TooltipContent>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
             <Input
-              value={tailflareState.tailscaleApiKey}
+              value={credentials.tailscaleApiKey}
               id="tailscale-api-key"
               type={showSecrets ? "text" : "password"}
               onChange={handleChange}
@@ -75,21 +99,39 @@ function KeyEntryForm({
         {/* Cloudflare column */}
         <div className="grid">
           <div className="items-center gap-1 grid">
-            <Label className="text-lg" htmlFor="cloudflare-zone-id">
-              Cloudflare API Email
-            </Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Label className="text-lg" htmlFor="tailnet-organization">
+                    Cloudflare API Email
+                  </Label>
+                  <TooltipContent>
+                    {usageText.credentials.cloudflareEmail}
+                  </TooltipContent>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
             <Input
-              value={tailflareState.cloudflareApiEmail ?? ""}
+              value={credentials.cloudflareApiEmail ?? ""}
               id="cloudflare-api-email"
               onChange={handleChange}
             />
           </div>
           <div className="items-center gap-1 grid">
-            <Label className="text-lg" htmlFor="cloudflare-api-key">
-              Cloudflare API key
-            </Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Label className="text-lg" htmlFor="tailnet-organization">
+                    Cloudflare API Key
+                  </Label>
+                  <TooltipContent>
+                    {usageText.credentials.cloudflareApiKey}
+                  </TooltipContent>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
             <Input
-              value={tailflareState.cloudflareApiKey}
+              value={credentials.cloudflareApiKey}
               id="cloudflare-api-key"
               type={showSecrets ? "text" : "password"}
               onChange={handleChange}
@@ -97,21 +139,20 @@ function KeyEntryForm({
           </div>
         </div>
       </form>
-
-    </>
+    </TooltipProvider>
   );
 }
 
 export default function KeyEntryDialog() {
   const [showSecrets, setShowSecrets] = useState(false);
-  const { tailflareState, setTailflareState, information, setInformation } = useTailflare();
+  const { credentials, setCredentials, appData, setAppData } = useTailflare();
   const hashKey = useInitializeHashKey();
 
   const { toast } = useToast();
 
   useEffect(() => {
-    initializeStoredState(hashKey, setTailflareState);
-  }, [hashKey, setTailflareState]);
+    initializeStoredState(hashKey, setCredentials);
+  }, [hashKey, setCredentials]);
 
   async function handleSave() {
     if (!hashKey) {
@@ -120,10 +161,10 @@ export default function KeyEntryDialog() {
 
     // Validate all required fields
     const requiredFields = {
-      'Cloudflare API Key': tailflareState.cloudflareApiKey,
-      'Tailscale API Key': tailflareState.tailscaleApiKey,
-      'Cloudflare API Email': tailflareState.cloudflareApiEmail,
-      'Tailnet Organization': tailflareState.tailnetOrganization,
+      "Cloudflare API Key": credentials.cloudflareApiKey,
+      "Tailscale API Key": credentials.tailscaleApiKey,
+      "Cloudflare API Email": credentials.cloudflareApiEmail,
+      "Tailnet Organization": credentials.tailnetOrganization,
     };
 
     const missingFields = Object.entries(requiredFields)
@@ -131,18 +172,26 @@ export default function KeyEntryDialog() {
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      throw new Error(
+        `Please fill in all required fields: ${missingFields.join(", ")}`
+      );
     }
 
     try {
       const encryptedState = {
-        cloudflareApiEmail: tailflareState.cloudflareApiEmail,
-        cloudflareApiKey: await encryptData(tailflareState.cloudflareApiKey, hashKey),
-        tailnetOrganization: tailflareState.tailnetOrganization,
-        tailscaleApiKey: await encryptData(tailflareState.tailscaleApiKey, hashKey),
+        cloudflareApiEmail: credentials.cloudflareApiEmail,
+        cloudflareApiKey: await encryptData(
+          credentials.cloudflareApiKey,
+          hashKey
+        ),
+        tailnetOrganization: credentials.tailnetOrganization,
+        tailscaleApiKey: await encryptData(
+          credentials.tailscaleApiKey,
+          hashKey
+        ),
       };
 
-      localStorage.setItem("tailflareState", JSON.stringify(encryptedState));
+      localStorage.setItem("credentials", JSON.stringify(encryptedState));
       return true; // Indicate successful save
     } catch (error) {
       console.error("Error saving API keys:", error);
@@ -153,7 +202,10 @@ export default function KeyEntryDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size={"sm"}><LockKeyholeIcon />Add API Secrets</Button>
+        <Button size={"sm"}>
+          <LockKeyholeIcon />
+          Add API Secrets
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
@@ -162,8 +214,8 @@ export default function KeyEntryDialog() {
         </DialogHeader>
         <KeyEntryForm
           showSecrets={showSecrets}
-          tailflareState={tailflareState}
-          setTailflareState={setTailflareState}
+          credentials={credentials}
+          setCredentials={setCredentials}
         />
         <DialogFooter>
           <Button
@@ -183,18 +235,24 @@ export default function KeyEntryDialog() {
             )}{" "}
             entered secrets
           </Button>
-          <Button onClick={async () => {
-            try {
-              await handleSave();
-              toast({
-                title: "API secrets saved securely",
-              })
-            } catch (error) {
-              toast({
-                title: error instanceof Error ? error.message : "An unexpected error occurred"
-              })
-            }
-          }} variant={"affirmative"}>
+          <Button
+            onClick={async () => {
+              try {
+                await handleSave();
+                toast({
+                  title: "API secrets saved securely",
+                });
+              } catch (error) {
+                toast({
+                  title:
+                    error instanceof Error
+                      ? error.message
+                      : "An unexpected error occurred",
+                });
+              }
+            }}
+            variant={"affirmative"}
+          >
             Save
           </Button>
         </DialogFooter>
@@ -202,8 +260,6 @@ export default function KeyEntryDialog() {
     </Dialog>
   );
 }
-
-
 
 function useInitializeHashKey() {
   const [hashKey, setHashKey] = useState<string | null>(null);
@@ -219,5 +275,3 @@ function useInitializeHashKey() {
 
   return hashKey;
 }
-
-

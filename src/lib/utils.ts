@@ -1,8 +1,12 @@
-import { getCloudflareRecordsInZone, getCloudflareZones, getTailscaleHosts } from "@/app/actions";
+import {
+  getCloudflareRecordsInZone,
+  getCloudflareZones,
+  getTailscaleHosts,
+} from "@/app/actions";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { saveToCache } from "./local-storage";
-import { Information, TailflareState } from "./schema-type";
+import { AppData, Credentials } from "./schema-type";
 import { RecordResponse } from "cloudflare/resources/dns/records.mjs";
 
 export function cn(...inputs: ClassValue[]) {
@@ -78,7 +82,10 @@ export function getDeepestSubdomain(hostname: string): string {
   return hostname.split(".")[0];
 }
 
-export function getMatchedHosts(tailscaleHosts: string[], cloudflareRecords: RecordResponse[]) {
+export function getMatchedHosts(
+  tailscaleHosts: string[],
+  cloudflareRecords: RecordResponse[]
+) {
   return tailscaleHosts.filter((host) =>
     cloudflareRecords.some(
       (record) =>
@@ -88,7 +95,10 @@ export function getMatchedHosts(tailscaleHosts: string[], cloudflareRecords: Rec
   );
 }
 
-export function getUnmatchedHosts(tailscaleHosts: string[], cloudflareRecords: RecordResponse[]) {
+export function getUnmatchedHosts(
+  tailscaleHosts: string[],
+  cloudflareRecords: RecordResponse[]
+) {
   return tailscaleHosts.filter(
     (host) =>
       !cloudflareRecords.some(
@@ -100,9 +110,9 @@ export function getUnmatchedHosts(tailscaleHosts: string[], cloudflareRecords: R
 }
 
 export async function handleForceRefresh(
-  tailflareState: TailflareState,
-  information: Information,
-  setInformation: (info: Information) => void,
+  credentials: Credentials,
+  appData: AppData,
+  setAppData: (info: AppData) => void,
   options?: {
     fetchZones?: boolean;
     fetchRecords?: boolean;
@@ -112,15 +122,15 @@ export async function handleForceRefresh(
   const {
     fetchZones = true,
     fetchRecords = true,
-    fetchHosts = true
+    fetchHosts = true,
   } = options ?? {};
 
   try {
-    const newInfo = { ...information };
+    const newInfo = { ...appData };
 
     // Fetch Cloudflare zones if requested
     if (fetchZones) {
-      const response = await getCloudflareZones(tailflareState);
+      const response = await getCloudflareZones(credentials);
       const zones = response.map((zone) => ({
         id: zone.id,
         name: zone.name,
@@ -132,10 +142,10 @@ export async function handleForceRefresh(
     }
 
     // Fetch DNS records if there's a selected zone and requested
-    if (fetchRecords && information.cloudflare.selectedZone) {
+    if (fetchRecords && appData.cloudflare.selectedZone) {
       const records = await getCloudflareRecordsInZone(
-        tailflareState,
-        information.cloudflare.selectedZone.id
+        credentials,
+        appData.cloudflare.selectedZone.id
       );
       newInfo.cloudflare = {
         ...newInfo.cloudflare,
@@ -145,7 +155,7 @@ export async function handleForceRefresh(
 
     // Fetch Tailscale hosts if requested
     if (fetchHosts) {
-      const res = await getTailscaleHosts(tailflareState);
+      const res = await getTailscaleHosts(credentials);
       const hosts = res.devices.map(
         (device: { name: string }) => device.name
       ) as string[];
@@ -155,7 +165,7 @@ export async function handleForceRefresh(
       };
     }
 
-    setInformation(newInfo);
+    setAppData(newInfo);
     saveToCache(newInfo);
 
     return { success: true };

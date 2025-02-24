@@ -3,12 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useTailflare } from "@/contexts/tailflare-context";
-import { InformationSchema } from "@/lib/schema-type";
+import { AppDataSchema } from "@/lib/schema-type";
 
 export function SubdomainDialog() {
-  const { information, setInformation } = useTailflare();
+  const { appData, setAppData } = useTailflare();
   const [subdomain, setSubdomain] = useState(
-    information.cloudflare.subdomain || ""
+    appData.cloudflare.subdomain || ""
   );
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -18,13 +18,13 @@ export function SubdomainDialog() {
 
     try {
       // Validate the subdomain using the schema
-      InformationSchema.shape.cloudflare.shape.subdomain.parse(subdomain);
+      AppDataSchema.shape.cloudflare.shape.subdomain.parse(subdomain);
 
-      // Update the information context with the new subdomain
-      setInformation({
-        ...information,
+      // Update the appData context with the new subdomain
+      setAppData({
+        ...appData,
         cloudflare: {
-          ...information.cloudflare,
+          ...appData.cloudflare,
           subdomain,
         },
       });
@@ -57,7 +57,7 @@ export function SubdomainDialog() {
               placeholder="subdomain"
               className={error ? "border-red-500" : ""}
             />
-            <span>.{information.cloudflare.selectedZone?.name}</span>
+            <span>.{appData.cloudflare.selectedZone?.name}</span>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
           <Button type="submit">Save</Button>
@@ -70,11 +70,11 @@ export function SubdomainDialog() {
           onClick={() => setEditing(true)}
         >
           <span>
-            {information.cloudflare.selectedZone
+            {appData.cloudflare.selectedZone
               ? `Target subdomain: ${[
                   "<hostname>",
-                  information.cloudflare.subdomain,
-                  information.cloudflare.selectedZone.name,
+                  appData.cloudflare.subdomain,
+                  appData.cloudflare.selectedZone.name,
                 ]
                   .filter((str) => str.length > 0)
                   .join(".")}`

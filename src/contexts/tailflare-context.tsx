@@ -1,13 +1,13 @@
 "use client";
 
-import { Information, TailflareState } from "@/lib/schema-type";
+import { AppData, Credentials } from "@/lib/schema-type";
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface TailflareContextType {
-  information: Information;
-  setInformation: React.Dispatch<React.SetStateAction<Information>>;
-  tailflareState: TailflareState;
-  setTailflareState: (state: TailflareState) => void;
+  appData: AppData;
+  setAppData: React.Dispatch<React.SetStateAction<AppData>>;
+  credentials: Credentials;
+  setCredentials: (state: Credentials) => void;
 }
 
 const TailflareContext = createContext<TailflareContextType | undefined>(
@@ -15,31 +15,31 @@ const TailflareContext = createContext<TailflareContextType | undefined>(
 );
 
 export function TailflareProvider({ children }: { children: ReactNode }) {
-  const [tailflareState, setTailflareState] = useState<TailflareState>({
+  const [credentials, setCredentials] = useState<Credentials>({
     cloudflareApiEmail: "",
     cloudflareApiKey: "",
     tailnetOrganization: "",
     tailscaleApiKey: "",
   });
 
-  const [information, setInformation] = useState<Information>({
+  const [appData, setAppData] = useState<AppData>({
     tailscale: {
       hosts: [],
     },
     cloudflare: {
       zones: [],
       dnsRecords: [],
-      subdomain: ""
+      subdomain: "",
     },
   });
 
   return (
     <TailflareContext.Provider
       value={{
-        information,
-        setInformation,
-        tailflareState,
-        setTailflareState,
+        appData,
+        setAppData,
+        credentials,
+        setCredentials,
       }}
     >
       {children}

@@ -264,6 +264,7 @@ export default function CloudflareSide() {
                         getDeepestSubdomain(record.name ?? "")
                     )
                 )
+                .sort((a, b) => (a?.name ?? "").localeCompare(b?.name ?? ""))
                 .map((record) =>
                   record ? (
                     <HostItem key={record.id} record={record}>
@@ -311,6 +312,7 @@ export default function CloudflareSide() {
                         getDeepestSubdomain(record.name ?? "")
                     )
                 )
+                .sort((a, b) => (a?.name ?? "").localeCompare(b?.name ?? ""))
                 .map((record) =>
                   record ? <HostItem key={record.id} record={record} /> : null
                 )}

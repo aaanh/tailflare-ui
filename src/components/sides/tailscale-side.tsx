@@ -226,20 +226,22 @@ export default function TailscaleSide() {
               {getMatchedHosts(
                 appData.tailscale.hosts,
                 appData.cloudflare.dnsRecords
-              ).map((host) => (
-                <HostItem
-                  key={host}
-                  record={{
-                    id: "placeholder-id",
-                    created_on: new Date().toISOString(),
-                    meta: {},
-                    modified_on: new Date().toISOString(),
-                    proxiable: false,
-                    name: host,
-                    content: undefined,
-                  }}
-                ></HostItem>
-              ))}
+              )
+                .sort((a, b) => a.localeCompare(b))
+                .map((host) => (
+                  <HostItem
+                    key={host}
+                    record={{
+                      id: "placeholder-id",
+                      created_on: new Date().toISOString(),
+                      meta: {},
+                      modified_on: new Date().toISOString(),
+                      proxiable: false,
+                      name: host,
+                      content: undefined,
+                    }}
+                  ></HostItem>
+                ))}
             </TableBody>
           </Table>
         </div>
@@ -256,38 +258,40 @@ export default function TailscaleSide() {
               {getUnmatchedHosts(
                 appData.tailscale.hosts,
                 appData.cloudflare.dnsRecords
-              ).map((host) => (
-                <HostItem
-                  key={host}
-                  record={{
-                    id: "placeholder-id",
-                    created_on: new Date().toISOString(),
-                    meta: {},
-                    modified_on: new Date().toISOString(),
-                    proxiable: false,
-                    name: host,
-                    content: undefined,
-                  }}
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={"affirmative"}
-                        size={"icon"}
-                        onClick={async () =>
-                          await handleSyncHostToCloudflare(host)
-                        }
-                        className="hidden group-hover:inline-flex"
-                      >
-                        <ArrowRightToLineIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Sync {`${host} to Cloudflare`}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </HostItem>
-              ))}
+              )
+                .sort((a, b) => a.localeCompare(b))
+                .map((host) => (
+                  <HostItem
+                    key={host}
+                    record={{
+                      id: "placeholder-id",
+                      created_on: new Date().toISOString(),
+                      meta: {},
+                      modified_on: new Date().toISOString(),
+                      proxiable: false,
+                      name: host,
+                      content: undefined,
+                    }}
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={"affirmative"}
+                          size={"icon"}
+                          onClick={async () =>
+                            await handleSyncHostToCloudflare(host)
+                          }
+                          className="hidden group-hover:inline-flex"
+                        >
+                          <ArrowRightToLineIcon />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Sync {`${host} to Cloudflare`}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </HostItem>
+                ))}
             </TableBody>
           </Table>
         </div>

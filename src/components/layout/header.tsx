@@ -5,7 +5,7 @@ import { ModeToggle } from "../theme-toggle";
 
 export default function Header() {
   return (
-    <div className="flex flex-wrap justify-between items-center gap-4 dark:bg-foreground/5 shadow p-2 border rounded-md">
+    <div className="flex flex-wrap justify-between items-center gap-4 dark:bg-foreground/5 shadow-sm p-2 border rounded-md">
       <div className="flex items-center gap-2">
         <Image
           src="/aaanh.webp"

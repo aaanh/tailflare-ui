@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { EyeClosed, Eye, LockKeyholeIcon } from "lucide-react";
+import { EyeClosed, Eye, LockKeyholeIcon, InfoIcon } from "lucide-react";
 import { Button } from "./ui/button";
 
 import { encryptData } from "@/lib/utils";
@@ -27,6 +27,8 @@ import {
   TooltipProvider,
 } from "./ui/tooltip";
 import usageText from "@/lib/usage-text";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 interface KeyEntryFormProps {
   credentials: Credentials;
@@ -212,6 +214,14 @@ export default function KeyEntryDialog() {
           <DialogTitle>Edit API Secrets</DialogTitle>
           <DialogDescription>{`Make changes to the API secrets required to call the service's endpoints`}</DialogDescription>
         </DialogHeader>
+        <Alert variant={"informative"} className="font-sans">
+          <InfoIcon className="w-4 h-4" />
+          <AlertTitle>Hint</AlertTitle>
+          <AlertDescription>
+            You can hover over the keys to see instructions for how to retrieve
+            that key.
+          </AlertDescription>
+        </Alert>
         <KeyEntryForm
           showSecrets={showSecrets}
           credentials={credentials}
@@ -235,26 +245,28 @@ export default function KeyEntryDialog() {
             )}{" "}
             entered secrets
           </Button>
-          <Button
-            onClick={async () => {
-              try {
-                await handleSave();
-                toast({
-                  title: "API secrets saved securely",
-                });
-              } catch (error) {
-                toast({
-                  title:
-                    error instanceof Error
-                      ? error.message
-                      : "An unexpected error occurred",
-                });
-              }
-            }}
-            variant={"affirmative"}
-          >
-            Save
-          </Button>
+          <DialogClose asChild>
+            <Button
+              onClick={async () => {
+                try {
+                  await handleSave();
+                  toast({
+                    title: "API secrets saved securely",
+                  });
+                } catch (error) {
+                  toast({
+                    title:
+                      error instanceof Error
+                        ? error.message
+                        : "An unexpected error occurred",
+                  });
+                }
+              }}
+              variant={"affirmative"}
+            >
+              Save
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -272,7 +272,7 @@ export default function TailscaleSide() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant={"outline"}
+                        variant={"affirmative"}
                         size={"icon"}
                         onClick={async () =>
                           await handleSyncHostToCloudflare(host)

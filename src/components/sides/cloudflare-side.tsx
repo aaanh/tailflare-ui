@@ -270,7 +270,7 @@ export default function CloudflareSide() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
-                            variant={"outline"}
+                            variant={"destructive"}
                             size={"icon"}
                             onClick={async () =>
                               await handleDeleteDnsRecord(record)

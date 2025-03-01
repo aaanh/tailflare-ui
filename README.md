@@ -25,7 +25,7 @@ cd tailflare-ui
 ```
 
 ```sh
-npm install && npm run dev
+npm i -g yarn && yarn && yarn dev
 ```
 
 # Contributions

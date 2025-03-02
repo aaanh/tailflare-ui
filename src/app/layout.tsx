@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, IBM_Plex_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/header";
 import { HoverProvider } from "@/contexts/hover-context";
@@ -14,6 +14,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const ibmPlex = IBM_Plex_Sans({
+  weight: ["700", "500", "400", "300", "100"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const inter = Inter({
+  weight: ["700", "500", "400", "300", "100"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Tailflare",
   description: "Sync your Tailscale hosts to Cloudflare",
@@ -26,9 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-mono`}
-      >
+      <body className={`${ibmPlex.className} antialiased font-sans`}>
         <HoverProvider>{children}</HoverProvider>
       </body>
     </html>

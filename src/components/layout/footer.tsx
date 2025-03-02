@@ -1,9 +1,9 @@
 export default function Footer() {
   return (
-    <footer className="border-grid border rounded-md py-6 md:px-8 md:py-0 mt-auto dark:bg-foreground/5">
+    <footer className="dark:bg-foreground/5 mt-auto md:px-8 py-6 md:py-0 border border-grid rounded-md">
       <div className="container-wrapper">
-        <div className="container py-4">
-          <div className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
+        <div className="py-4 container">
+          <div className="text-muted-foreground text-sm md:text-left text-center text-balance leading-loose">
             Built by{" "}
             <a
               href={"https://aaanh.com"}
@@ -22,7 +22,7 @@ export default function Footer() {
             >
               GitHub
             </a>
-            . Original CLI in Golang{""}
+            . Original CLI in Golang{" "}
             <a
               href={"https://github.com/aaanh/tailflare"}
               target="_blank"
@@ -31,6 +31,7 @@ export default function Footer() {
             >
               Tailflare
             </a>
+            .
           </div>
         </div>
       </div>

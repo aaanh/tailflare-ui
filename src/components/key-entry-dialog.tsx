@@ -214,7 +214,7 @@ export default function KeyEntryDialog() {
           <DialogTitle>Edit API Secrets</DialogTitle>
           <DialogDescription>{`Make changes to the API secrets required to call the service's endpoints`}</DialogDescription>
         </DialogHeader>
-        <Alert variant={"informative"} className="font-sans">
+        <Alert variant={"informative"}>
           <InfoIcon className="w-4 h-4" />
           <AlertTitle>Hint</AlertTitle>
           <AlertDescription>

@@ -171,14 +171,14 @@ export default function SuperActionsMenu() {
   async function handleSubdomainBulkChange() {
     const { from, to } = bulkSubdomainChangeParams;
 
-    const matchedHosts: BatchPatchParam.CNAMERecord[] =
+    const matchedHosts: BatchPatchParam.CNAME[] =
       appData.cloudflare.dnsRecords.filter((record) =>
         appData.tailscale.hosts.some(
           (host) =>
             host &&
             getDeepestSubdomain(host) === getDeepestSubdomain(record.name ?? "")
         )
-      ) as RecordResponse.CNAMERecord[];
+      ) as RecordResponse.CNAME[];
 
     console.log("Matched hosts", matchedHosts);
 

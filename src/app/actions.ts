@@ -120,7 +120,7 @@ export async function deleteMultipleRecordsInCloudflareZone(
 }
 
 export async function UpdateMultipleRecordsInCloudflareZone(
-  batchPatchParams: BatchPatchParam.CNAMERecord[],
+  batchPatchParams: BatchPatchParam.CNAME[],
   credentials: Credentials,
   appData: AppData
 ) {
